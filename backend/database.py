@@ -17,3 +17,8 @@ def create_db_and_tables():
 def get_session() -> Generator[Session, None, None]:
     with Session(engine) as session:
         yield session
+
+def get_uow():
+    from backend.uow.unit_of_work import UnitOfWork
+    with UnitOfWork() as uow:
+        yield uow

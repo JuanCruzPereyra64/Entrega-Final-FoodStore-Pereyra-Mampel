@@ -4,15 +4,18 @@ from sqlmodel import SQLModel
 
 class IngredienteCreate(SQLModel):
     nombre: str
-    unidad_medida: str
+    descripcion: Optional[str] = None
+    es_alergeno: bool = False
 
 
 class IngredienteUpdate(SQLModel):
     nombre: Optional[str] = None
-    unidad_medida: Optional[str] = None
+    descripcion: Optional[str] = None
+    es_alergeno: Optional[bool] = None
 
 
 class IngredienteRead(SQLModel):
     id: int
     nombre: str
-    unidad_medida: str
+    descripcion: Optional[str] = None
+    es_alergeno: bool
