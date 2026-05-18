@@ -18,7 +18,7 @@ def get_by_id(uow: UnitOfWork, categoria_id: int) -> Categoria:
 def create(uow: UnitOfWork, data: CategoriaCreate) -> Categoria:
     categoria = Categoria.model_validate(data)
     uow.categorias.add(categoria)
-    uow.commit()
+    uow.session.flush()
     uow.session.refresh(categoria)
     return categoria
 
@@ -28,7 +28,7 @@ def update(uow: UnitOfWork, categoria_id: int, data: CategoriaUpdate) -> Categor
     for key, value in data.model_dump(exclude_unset=True).items():
         setattr(categoria, key, value)
     uow.categorias.add(categoria)
-    uow.commit()
+    uow.session.flush()
     uow.session.refresh(categoria)
     return categoria
 
@@ -36,4 +36,4 @@ def update(uow: UnitOfWork, categoria_id: int, data: CategoriaUpdate) -> Categor
 def delete(uow: UnitOfWork, categoria_id: int) -> None:
     categoria = get_by_id(uow, categoria_id)
     uow.categorias.delete(categoria)
-    uow.commit()
+    uow.session.flush()

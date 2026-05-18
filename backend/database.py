@@ -20,5 +20,4 @@ def get_session() -> Generator[Session, None, None]:
 
 def get_uow():
     from backend.uow.unit_of_work import UnitOfWork
-    with UnitOfWork() as uow:
-        yield uow
+    return UnitOfWork()

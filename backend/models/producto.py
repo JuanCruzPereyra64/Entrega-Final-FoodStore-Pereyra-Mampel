@@ -1,7 +1,7 @@
 from datetime import datetime, timezone
 from typing import TYPE_CHECKING, Optional
-from sqlmodel import Field, Relationship, SQLModel, Column
-from sqlalchemy import ARRAY, String
+from sqlmodel import Field, Relationship, SQLModel, Column, String, BigInteger, Text, Numeric, Boolean, DateTime, ForeignKey, JSON
+from sqlalchemy import ARRAY
 
 if TYPE_CHECKING:
     from backend.models.categoria import Categoria
@@ -11,34 +11,36 @@ if TYPE_CHECKING:
 class ProductoCategoria(SQLModel, table=True):
     __tablename__ = "producto_categoria"
 
-    producto_id: int = Field(default=None, foreign_key="productos.id", primary_key=True)
-    categoria_id: int = Field(default=None, foreign_key="categorias.id", primary_key=True)
-    es_principal: bool = Field(default=False)
-    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    producto_id: int = Field(sa_column=Column(BigInteger, ForeignKey("productos.id", ondelete="CASCADE"), primary_key=True))
+    categoria_id: int = Field(sa_column=Column(BigInteger, ForeignKey("categorias.id", ondelete="CASCADE"), primary_key=True))
+    es_principal: bool = Field(default=False, sa_column=Column(Boolean, nullable=False, default=False))
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc), sa_column=Column(DateTime(timezone=True), nullable=False))
 
 
 class ProductoIngrediente(SQLModel, table=True):
     __tablename__ = "producto_ingrediente"
 
-    producto_id: int = Field(default=None, foreign_key="productos.id", primary_key=True)
-    ingrediente_id: int = Field(default=None, foreign_key="ingredientes.id", primary_key=True)
-    es_removible: bool = Field(default=False)
+    producto_id: int = Field(sa_column=Column(BigInteger, ForeignKey("productos.id", ondelete="CASCADE"), primary_key=True))
+    ingrediente_id: int = Field(sa_column=Column(BigInteger, ForeignKey("ingredientes.id", ondelete="CASCADE"), primary_key=True))
+    es_removible: bool = Field(default=False, sa_column=Column(Boolean, nullable=False, default=False))
+    es_opcional: bool = Field(default=False, sa_column=Column(Boolean, nullable=False, default=False))
 
 
 class Producto(SQLModel, table=True):
     __tablename__ = "productos"
 
-    id: Optional[int] = Field(default=None, primary_key=True)
-    nombre: str = Field(min_length=1, max_length=150)
-    descripcion: Optional[str] = None
-    precio_base: float = Field(ge=0.0)
+    id: Optional[int] = Field(default=None, sa_column=Column(BigInteger, primary_key=True, autoincrement=True))
+    nombre: str = Field(sa_column=Column(String(150), nullable=False))
+    descripcion: Optional[str] = Field(default=None, sa_column=Column(Text))
+    precio_base: float = Field(sa_column=Column(Numeric(10, 2), nullable=False))
     imagenes_url: list[str] = Field(default_factory=list, sa_column=Column(ARRAY(String)))
-    stock_cantidad: int = Field(default=0, ge=0)
-    disponible: bool = Field(default=True)
+    tiempo_prep_min: Optional[int] = Field(default=None, sa_column=Column(BigInteger))
+    stock_cantidad: int = Field(default=0, sa_column=Column(BigInteger, nullable=False, default=0))
+    disponible: bool = Field(default=True, sa_column=Column(Boolean, nullable=False, default=True))
     
-    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
-    updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
-    deleted_at: Optional[datetime] = None
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc), sa_column=Column(DateTime(timezone=True), nullable=False))
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc), sa_column=Column(DateTime(timezone=True), nullable=False))
+    deleted_at: Optional[datetime] = Field(default=None, sa_column=Column(DateTime(timezone=True)))
 
     # Relaciones N:M
     categorias: list["Categoria"] = Relationship(

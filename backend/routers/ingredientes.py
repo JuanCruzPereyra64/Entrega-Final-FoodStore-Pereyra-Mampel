@@ -14,24 +14,29 @@ def get_ingredientes(
     offset: Annotated[int, Query(ge=0)] = 0,
     limit: Annotated[int, Query(ge=1, le=100)] = 100,
 ):
-    return ingrediente_service.get_all(uow, offset, limit)
+    with uow:
+        return ingrediente_service.get_all(uow, offset, limit)
 
 
 @router.get("/{ingrediente_id}", response_model=IngredienteRead)
 def get_ingrediente(ingrediente_id: int, uow: UnitOfWork = Depends(get_uow)):
-    return ingrediente_service.get_by_id(uow, ingrediente_id)
+    with uow:
+        return ingrediente_service.get_by_id(uow, ingrediente_id)
 
 
 @router.post("/", response_model=IngredienteRead, status_code=201)
 def create_ingrediente(data: IngredienteCreate, uow: UnitOfWork = Depends(get_uow)):
-    return ingrediente_service.create(uow, data)
+    with uow:
+        return ingrediente_service.create(uow, data)
 
 
 @router.put("/{ingrediente_id}", response_model=IngredienteRead)
 def update_ingrediente(ingrediente_id: int, data: IngredienteUpdate, uow: UnitOfWork = Depends(get_uow)):
-    return ingrediente_service.update(uow, ingrediente_id, data)
+    with uow:
+        return ingrediente_service.update(uow, ingrediente_id, data)
 
 
 @router.delete("/{ingrediente_id}", status_code=204)
 def delete_ingrediente(ingrediente_id: int, uow: UnitOfWork = Depends(get_uow)):
-    ingrediente_service.delete(uow, ingrediente_id)
+    with uow:
+        ingrediente_service.delete(uow, ingrediente_id)

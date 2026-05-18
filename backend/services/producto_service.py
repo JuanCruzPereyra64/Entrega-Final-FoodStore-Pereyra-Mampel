@@ -29,7 +29,7 @@ def create(uow: UnitOfWork, data: ProductoCreate) -> Producto:
         
     producto = Producto.model_validate(data, update={"categorias": [], "ingredientes": []})
     uow.productos.add(producto)
-    uow.commit()
+    uow.session.flush()
     uow.session.refresh(producto)
     
     # Unir categorías
@@ -42,7 +42,7 @@ def create(uow: UnitOfWork, data: ProductoCreate) -> Producto:
         link_ing = ProductoIngrediente(producto_id=producto.id, ingrediente_id=ing_id)
         uow.session.add(link_ing)
     
-    uow.commit()
+    uow.session.flush()
     return get_by_id(uow, producto.id)
 
 
@@ -73,14 +73,14 @@ def update(uow: UnitOfWork, producto_id: int, data: ProductoUpdate) -> Producto:
         setattr(producto, key, value)
     
     uow.productos.add(producto)
-    uow.commit()
+    uow.session.flush()
     return get_by_id(uow, producto_id)
 
 
 def delete(uow: UnitOfWork, producto_id: int) -> None:
     producto = get_by_id(uow, producto_id)
     uow.productos.delete(producto)
-    uow.commit()
+    uow.session.flush()
 
 
 def add_ingrediente(uow: UnitOfWork, producto_id: int, ingrediente_id: int) -> Producto:
@@ -91,7 +91,7 @@ def add_ingrediente(uow: UnitOfWork, producto_id: int, ingrediente_id: int) -> P
     if not existing:
         link = ProductoIngrediente(producto_id=producto_id, ingrediente_id=ingrediente_id)
         uow.session.add(link)
-        uow.commit()
+        uow.session.flush()
     
     return get_by_id(uow, producto_id)
 
@@ -101,5 +101,5 @@ def remove_ingrediente(uow: UnitOfWork, producto_id: int, ingrediente_id: int) -
     if not link:
         raise HTTPException(status_code=404, detail="Ingrediente no presente en el producto")
     uow.session.delete(link)
-    uow.commit()
+    uow.session.flush()
     return get_by_id(uow, producto_id)
