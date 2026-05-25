@@ -1,4 +1,4 @@
-# E-Commerce Food Store — Programación 4 (Primer Parcial)
+# E-Commerce Food Store — Programación 4 (Segundo Parcial)
 
 Aplicación web Full-Stack para la gestión y venta de productos alimenticios (E-Commerce), separada en dos módulos principales: una tienda para clientes y un panel de administración para empleados/dueños.
 
