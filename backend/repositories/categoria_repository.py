@@ -2,10 +2,11 @@ from typing import Optional
 from sqlmodel import Session, select
 from sqlalchemy.orm import selectinload
 from backend.models.categoria import Categoria
+from backend.repositories.base_repository import BaseRepository
 
-class CategoriaRepository:
+class CategoriaRepository(BaseRepository[Categoria]):
     def __init__(self, session: Session):
-        self.session = session
+        super().__init__(Categoria, session)
 
     def get_all(self, offset: int = 0, limit: int = 100) -> list[Categoria]:
         statement = (
@@ -23,9 +24,3 @@ class CategoriaRepository:
             .options(selectinload(Categoria.subcategorias))
         )
         return self.session.exec(statement).first()
-
-    def add(self, categoria: Categoria) -> None:
-        self.session.add(categoria)
-
-    def delete(self, categoria: Categoria) -> None:
-        self.session.delete(categoria)

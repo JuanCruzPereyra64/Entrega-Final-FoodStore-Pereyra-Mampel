@@ -43,13 +43,17 @@ def registrar_usuario(uow: UnitOfWork, data: UsuarioCreate) -> Usuario:
 
 
 def autenticar_usuario(uow: UnitOfWork, email: str, password: str) -> Usuario:
+    print(f"DEBUG LOGIN: email='{email}', password='{password}'")
     usuario = uow.usuarios.get_by_email(email)
+    print(f"DEBUG LOGIN: usuario encontrado={usuario is not None}")
     if not usuario:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Credenciales inválidas"
         )
-    if not verify_password(password, usuario.password_hash):
+    is_valid = verify_password(password, usuario.password_hash)
+    print(f"DEBUG LOGIN: password verificado={is_valid}")
+    if not is_valid:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Credenciales inválidas"

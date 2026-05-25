@@ -2,10 +2,11 @@ from typing import Optional
 from sqlmodel import Session, select
 from sqlalchemy.orm import selectinload
 from backend.models.producto import Producto, ProductoCategoria
+from backend.repositories.base_repository import BaseRepository
 
-class ProductoRepository:
+class ProductoRepository(BaseRepository[Producto]):
     def __init__(self, session: Session):
-        self.session = session
+        super().__init__(Producto, session)
 
     def get_all(self, categoria_id: Optional[int] = None, offset: int = 0, limit: int = 100) -> list[Producto]:
         statement = (
@@ -26,9 +27,3 @@ class ProductoRepository:
             .options(selectinload(Producto.ingredientes), selectinload(Producto.categorias))
         )
         return self.session.exec(statement).first()
-
-    def add(self, producto: Producto) -> None:
-        self.session.add(producto)
-
-    def delete(self, producto: Producto) -> None:
-        self.session.delete(producto)

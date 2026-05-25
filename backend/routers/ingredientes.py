@@ -4,9 +4,10 @@ from backend.database import get_uow
 from backend.schemas.ingrediente import IngredienteCreate, IngredienteRead, IngredienteUpdate
 from backend.services import ingrediente_service
 from backend.uow.unit_of_work import UnitOfWork
+from backend.models.usuario import Usuario
+from backend.api.deps import check_role
 
 router = APIRouter(prefix="/ingredientes", tags=["Ingredientes"])
-
 
 @router.get("/", response_model=list[IngredienteRead])
 def get_ingredientes(
@@ -17,26 +18,35 @@ def get_ingredientes(
     with uow:
         return ingrediente_service.get_all(uow, offset, limit)
 
-
 @router.get("/{ingrediente_id}", response_model=IngredienteRead)
 def get_ingrediente(ingrediente_id: int, uow: UnitOfWork = Depends(get_uow)):
     with uow:
         return ingrediente_service.get_by_id(uow, ingrediente_id)
 
-
 @router.post("/", response_model=IngredienteRead, status_code=201)
-def create_ingrediente(data: IngredienteCreate, uow: UnitOfWork = Depends(get_uow)):
+def create_ingrediente(
+    data: IngredienteCreate, 
+    current_user: Usuario = Depends(check_role(["ADMIN", "STOCK"])),
+    uow: UnitOfWork = Depends(get_uow)
+):
     with uow:
         return ingrediente_service.create(uow, data)
 
-
 @router.put("/{ingrediente_id}", response_model=IngredienteRead)
-def update_ingrediente(ingrediente_id: int, data: IngredienteUpdate, uow: UnitOfWork = Depends(get_uow)):
+def update_ingrediente(
+    ingrediente_id: int, 
+    data: IngredienteUpdate, 
+    current_user: Usuario = Depends(check_role(["ADMIN", "STOCK"])),
+    uow: UnitOfWork = Depends(get_uow)
+):
     with uow:
         return ingrediente_service.update(uow, ingrediente_id, data)
 
-
 @router.delete("/{ingrediente_id}", status_code=204)
-def delete_ingrediente(ingrediente_id: int, uow: UnitOfWork = Depends(get_uow)):
+def delete_ingrediente(
+    ingrediente_id: int, 
+    current_user: Usuario = Depends(check_role(["ADMIN", "STOCK"])),
+    uow: UnitOfWork = Depends(get_uow)
+):
     with uow:
         ingrediente_service.delete(uow, ingrediente_id)

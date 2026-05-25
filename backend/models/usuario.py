@@ -14,7 +14,7 @@ class Usuario(SQLModel, table=True):
 
     id: Optional[int] = Field(
         default=None, 
-        sa_column=Column(BigInteger, primary_key=True, autoincrement=True)
+        primary_key=True
     )
     nombre: str = Field(
         sa_column=Column(String(80), nullable=False)
@@ -47,7 +47,11 @@ class Usuario(SQLModel, table=True):
     )
 
     roles: list["Rol"] = Relationship(
-        back_populates="usuarios", link_model=UsuarioRol
+        back_populates="usuarios", link_model=UsuarioRol,
+        sa_relationship_kwargs={
+            "primaryjoin": "Usuario.id==UsuarioRol.usuario_id",
+            "secondaryjoin": "Rol.id==UsuarioRol.rol_id"
+        }
     )
     direcciones: list["DireccionEntrega"] = Relationship(
         back_populates="usuario", sa_relationship_kwargs={"cascade": "all, delete-orphan"}

@@ -3,7 +3,6 @@ import os
 from sqlmodel import select
 from passlib.context import CryptContext
 
-# Agregar el root del proyecto al PYTHONPATH para poder ejecutar desde cualquier lado
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from backend.database import create_db_and_tables
@@ -25,7 +24,7 @@ def run_seed():
     uow = UnitOfWork()
     with uow:
         print("Poblando Roles...")
-        roles = ["Admin", "Cliente"]
+        roles = ["ADMIN", "STOCK", "PEDIDOS", "CLIENT"]
         for r_name in roles:
             if not uow.session.exec(select(Rol).where(Rol.nombre == r_name)).first():
                 uow.session.add(Rol(nombre=r_name, descripcion=f"Rol {r_name}"))
@@ -63,10 +62,23 @@ def run_seed():
             uow.usuarios.add(user)
             uow.session.flush()
             
-            # Asignarle el Rol Cliente
-            rol_cliente = uow.session.exec(select(Rol).where(Rol.nombre == "Cliente")).first()
+            rol_cliente = uow.session.exec(select(Rol).where(Rol.nombre == "CLIENT")).first()
             if rol_cliente:
                 uow.session.add(UsuarioRol(usuario_id=user.id, rol_id=rol_cliente.id))
+                
+        print("Creando Usuario Admin...")
+        admin_email = "admin@admin.com"
+        if not uow.usuarios.get_by_email(admin_email):
+            hash_pwd = pwd_context.hash("admin")
+            admin_user = Usuario(
+                nombre="Admin", apellido="Admin", email=admin_email, password_hash=hash_pwd
+            )
+            uow.usuarios.add(admin_user)
+            uow.session.flush()
+            
+            rol_admin = uow.session.exec(select(Rol).where(Rol.nombre == "ADMIN")).first()
+            if rol_admin:
+                uow.session.add(UsuarioRol(usuario_id=admin_user.id, rol_id=rol_admin.id))
                 
         print("Creando Categoria e Ingredientes Básicos...")
         if not uow.session.exec(select(Categoria).where(Categoria.nombre == "Hamburguesas")).first():

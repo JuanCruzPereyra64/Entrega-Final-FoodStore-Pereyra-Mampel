@@ -29,11 +29,11 @@ class ProductoIngrediente(SQLModel, table=True):
 class Producto(SQLModel, table=True):
     __tablename__ = "productos"
 
-    id: Optional[int] = Field(default=None, sa_column=Column(BigInteger, primary_key=True, autoincrement=True))
+    id: Optional[int] = Field(default=None, primary_key=True)
     nombre: str = Field(sa_column=Column(String(150), nullable=False))
     descripcion: Optional[str] = Field(default=None, sa_column=Column(Text))
     precio_base: float = Field(sa_column=Column(Numeric(10, 2), nullable=False))
-    imagenes_url: list[str] = Field(default_factory=list, sa_column=Column(ARRAY(String)))
+    imagenes_url: list[str] = Field(default_factory=list, sa_column=Column(JSON))
     tiempo_prep_min: Optional[int] = Field(default=None, sa_column=Column(BigInteger))
     stock_cantidad: int = Field(default=0, sa_column=Column(BigInteger, nullable=False, default=0))
     disponible: bool = Field(default=True, sa_column=Column(Boolean, nullable=False, default=True))

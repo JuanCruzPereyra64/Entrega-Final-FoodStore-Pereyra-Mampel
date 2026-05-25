@@ -7,6 +7,7 @@ from backend.repositories.usuario_repository import UsuarioRepository
 from backend.repositories.rol_repository import RolRepository
 from backend.repositories.pedido_repository import PedidoRepository
 from backend.repositories.estado_pedido_repository import EstadoPedidoRepository
+from backend.repositories.direccion_repository import DireccionRepository
 
 class UnitOfWork:
     def __init__(self):
@@ -18,6 +19,7 @@ class UnitOfWork:
         self.roles: RolRepository = None
         self.pedidos: PedidoRepository = None
         self.estados_pedido: EstadoPedidoRepository = None
+        self.direcciones: DireccionRepository = None
 
     def __enter__(self):
         self.session = Session(engine, expire_on_commit=False)
@@ -28,6 +30,7 @@ class UnitOfWork:
         self.roles = RolRepository(self.session)
         self.pedidos = PedidoRepository(self.session)
         self.estados_pedido = EstadoPedidoRepository(self.session)
+        self.direcciones = DireccionRepository(self.session)
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):

@@ -104,3 +104,6 @@ def transicionar_estado(uow: UnitOfWork, pedido_id: int, nuevo_estado_codigo: st
     uow.session.refresh(pedido)
     
     return pedido
+
+def get_all(uow: UnitOfWork):
+    return uow.pedidos.get_all()

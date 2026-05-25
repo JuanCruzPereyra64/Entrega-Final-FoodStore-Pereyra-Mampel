@@ -1,0 +1,73 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Outfit", var(--font-sans);
+
+  --color-primary: #6366f1; /* Indigo 500 */
+  --color-primary-hover: #4f46e5; /* Indigo 600 */
+  --color-accent: #f59e0b; /* Amber 500 */
+  --color-accent-hover: #d97706; /* Amber 600 */
+  
+  --color-surface-base: #ffffff;
+  --color-surface-muted: #f8fafc;
+  --color-border-subtle: #e2e8f0;
+  
+  --shadow-premium: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  --shadow-glass: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
+}
+
+@layer base {
+  :root {
+    --text-primary: #0f172a;
+    --text-secondary: #64748b;
+    --bg-main: #f1f5f9;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --text-primary: #f8fafc;
+      --text-secondary: #94a3b8;
+      --bg-main: #0f172a;
+      --color-surface-base: #1e293b;
+      --color-surface-muted: #0f172a;
+      --color-border-subtle: #334155;
+    }
+  }
+
+  body {
+    @apply bg-[var(--bg-main)] text-[var(--text-primary)] font-sans antialiased;
+    margin: 0;
+  }
+
+  h1, h2, h3, h4 {
+    @apply font-display font-semibold tracking-tight;
+  }
+}
+
+@layer components {
+  .glass-panel {
+    @apply bg-white/70 dark:bg-slate-900/70 backdrop-blur-md border border-white/20 dark:border-slate-700/30 shadow-glass;
+  }
+  
+  .premium-card {
+    @apply bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-premium transition-all duration-300;
+  }
+  
+  .premium-table-header {
+    @apply bg-slate-50 dark:bg-slate-900/50 text-slate-500 dark:text-slate-400 font-semibold text-xs uppercase tracking-wider px-6 py-4;
+  }
+  
+  .premium-table-row {
+    @apply border-b border-slate-100 dark:border-slate-800 hover:bg-slate-50/50 dark:hover:bg-slate-700/30 transition-colors;
+  }
+}
+
+/* Override fixed width root if it exists */
+#root {
+  width: 100% !important;
+  max-width: none !important;
+  margin: 0 !important;
+  text-align: left !important;
+  border-inline: none !important;
+}

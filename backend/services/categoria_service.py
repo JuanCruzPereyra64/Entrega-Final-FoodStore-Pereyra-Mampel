@@ -35,5 +35,7 @@ def update(uow: UnitOfWork, categoria_id: int, data: CategoriaUpdate) -> Categor
 
 def delete(uow: UnitOfWork, categoria_id: int) -> None:
     categoria = get_by_id(uow, categoria_id)
+    if any(p.deleted_at is None for p in categoria.productos):
+        raise HTTPException(status_code=409, detail="No se puede eliminar la categoria porque tiene productos activos")
     uow.categorias.delete(categoria)
     uow.session.flush()

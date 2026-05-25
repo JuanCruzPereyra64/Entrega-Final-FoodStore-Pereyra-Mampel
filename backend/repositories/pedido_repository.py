@@ -2,10 +2,11 @@ from typing import Optional
 from sqlmodel import Session, select
 from sqlalchemy.orm import selectinload
 from backend.models.pedido import Pedido
+from backend.repositories.base_repository import BaseRepository
 
-class PedidoRepository:
+class PedidoRepository(BaseRepository[Pedido]):
     def __init__(self, session: Session):
-        self.session = session
+        super().__init__(Pedido, session)
 
     def get_by_id(self, pedido_id: int) -> Optional[Pedido]:
         statement = (
@@ -14,6 +15,3 @@ class PedidoRepository:
             .options(selectinload(Pedido.detalles), selectinload(Pedido.historial))
         )
         return self.session.exec(statement).first()
-
-    def add(self, pedido: Pedido) -> None:
-        self.session.add(pedido)

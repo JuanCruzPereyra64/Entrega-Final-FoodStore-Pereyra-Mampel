@@ -1,6 +1,5 @@
 import jwt
-from fastapi import Depends, HTTPException, status
-from fastapi.security import OAuth2PasswordBearer
+from fastapi import Depends, HTTPException, status, Request
 from pydantic import ValidationError
 from backend.core.security import ALGORITHM, SECRET_KEY
 from backend.models.usuario import Usuario
@@ -8,12 +7,17 @@ from backend.schemas.token import TokenPayload
 from backend.database import get_uow
 from backend.uow.unit_of_work import UnitOfWork
 
-reusable_oauth2 = OAuth2PasswordBearer(
-    tokenUrl="/usuarios/login"
-)
+def get_token_from_cookie(request: Request) -> str:
+    token = request.cookies.get("access_token")
+    if not token:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Falta loguearse",
+        )
+    return token
 
 def get_current_user(
-    token: str = Depends(reusable_oauth2), 
+    token: str = Depends(get_token_from_cookie), 
     uow: UnitOfWork = Depends(get_uow)
 ) -> Usuario:
     try:
@@ -22,14 +26,28 @@ def get_current_user(
     except (jwt.InvalidTokenError, ValidationError):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="No se pudieron validar las credenciales de seguridad.",
+            detail="Token invalido",
         )
         
     with uow:
         user = uow.usuarios.get_by_id(int(token_data.sub))
         if not user:
-            raise HTTPException(status_code=404, detail="Usuario no encontrado en el sistema.")
+            raise HTTPException(status_code=404, detail="Usuario no encontrado")
         if user.deleted_at is not None:
-            raise HTTPException(status_code=400, detail="El usuario ha sido eliminado (soft delete).")
+            raise HTTPException(status_code=400, detail="Usuario borrado")
+        
+        # Eager load the roles while the session is open
+        _ = user.roles
             
         return user
+
+def check_role(required_roles: list[str]):
+    def role_checker(current_user: Usuario = Depends(get_current_user)):
+        user_roles = [r.nombre for r in current_user.roles]
+        if not any(role in user_roles for role in required_roles):
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="No tenes permisos para acceder aca"
+            )
+        return current_user
+    return role_checker

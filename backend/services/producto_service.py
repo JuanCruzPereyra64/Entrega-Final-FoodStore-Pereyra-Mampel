@@ -103,3 +103,11 @@ def remove_ingrediente(uow: UnitOfWork, producto_id: int, ingrediente_id: int) -
     uow.session.delete(link)
     uow.session.flush()
     return get_by_id(uow, producto_id)
+
+def update_disponibilidad(uow: UnitOfWork, producto_id: int, disponible: bool) -> Producto:
+    producto = get_by_id(uow, producto_id)
+    producto.disponible = disponible
+    uow.productos.add(producto)
+    uow.session.flush()
+    uow.session.refresh(producto)
+    return producto

@@ -6,7 +6,8 @@ import {
   UtensilsCrossed, 
   ChefHat,
   Menu,
-  Home
+  Home,
+  ClipboardList
 } from 'lucide-react'
 import { useState } from 'react'
 
@@ -16,6 +17,7 @@ interface LayoutProps {
 
 const navItems = [
   { to: '/', label: 'Dashboard', icon: Home },
+  { to: '/pedidos', label: 'Pedidos', icon: ClipboardList },
   { to: '/categorias', label: 'Categorías', icon: LayoutDashboard },
   { to: '/ingredientes', label: 'Ingredientes', icon: Leaf },
   { to: '/productos', label: 'Productos', icon: UtensilsCrossed },

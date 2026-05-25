@@ -13,7 +13,7 @@ class HistorialEstadoPedido(SQLModel, table=True):
 
     id: Optional[int] = Field(
         default=None, 
-        sa_column=Column(BigInteger, primary_key=True, autoincrement=True)
+        primary_key=True
     )
     pedido_id: int = Field(
         sa_column=Column(BigInteger, ForeignKey("pedidos.id", ondelete="CASCADE"), nullable=False)

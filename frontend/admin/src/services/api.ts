@@ -1,16 +1,43 @@
-const BASE_URL = 'http://localhost:8000'
+import axios from 'axios'
+import { useAuthStore } from '../store/useAuthStore'
+
+export const apiClient = axios.create({
+  baseURL: 'http://localhost:8000',
+  withCredentials: true,
+})
+
+apiClient.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    const isLoginRoute = error.config?.url?.includes('/usuarios/login')
+    if (error.response?.status === 401 && !isLoginRoute) {
+      useAuthStore.getState().logout()
+      window.location.href = '/login'
+    }
+    return Promise.reject(error)
+  }
+)
 
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
-  const res = await fetch(`${BASE_URL}${path}`, {
-    headers: { 'Content-Type': 'application/json' },
-    ...options,
-  })
-  if (!res.ok) {
-    const error = await res.json().catch(() => ({ detail: 'Error desconocido' }))
-    throw new Error(error.detail ?? 'Error en la petición')
+  try {
+    const res = await apiClient.request<T>({
+      url: path,
+      method: options?.method || 'GET',
+      data: options?.body ? JSON.parse(options.body as string) : undefined,
+      headers: options?.headers as Record<string, string>,
+    })
+    return res.data
+  } catch (error: any) {
+    let msg = 'Error en la petición'
+    if (error.response?.data?.detail) {
+      if (typeof error.response.data.detail === 'string') {
+        msg = error.response.data.detail
+      } else if (Array.isArray(error.response.data.detail)) {
+        msg = error.response.data.detail.map((e: any) => e.msg).join(', ')
+      }
+    }
+    throw new Error(msg)
   }
-  if (res.status === 204) return undefined as T
-  return res.json()
 }
 
 export const categoriasApi = {
@@ -48,4 +75,16 @@ export const productosApi = {
     request<import('../types').Producto>(`/productos/${productoId}/ingredientes/${ingredienteId}`, { method: 'POST' }),
   removeIngrediente: (productoId: number, ingredienteId: number) =>
     request<import('../types').Producto>(`/productos/${productoId}/ingredientes/${ingredienteId}`, { method: 'DELETE' }),
+}
+
+export const authApi = {
+  login: (data: import('../types').UsuarioLogin) =>
+    request<{message: string, rol: string[]}>('/usuarios/login', { method: 'POST', body: JSON.stringify(data) }),
+  logout: () => request<{message: string}>('/usuarios/logout', { method: 'POST' })
+}
+
+export const pedidosApi = {
+  getAll: () => request<import('../types').Pedido[]>('/pedidos/'),
+  updateEstado: (id: number, estado_codigo: string) =>
+    request<import('../types').Pedido>(`/pedidos/${id}/estado`, { method: 'PUT', body: JSON.stringify({ nuevo_estado_codigo: estado_codigo }) }),
 }

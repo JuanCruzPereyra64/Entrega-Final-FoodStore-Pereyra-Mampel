@@ -12,7 +12,7 @@ class Rol(SQLModel, table=True):
 
     id: Optional[int] = Field(
         default=None,
-        sa_column=Column(BigInteger, primary_key=True, autoincrement=True)
+        primary_key=True
     )
     nombre: str = Field(
         sa_column=Column(String(50), unique=True, nullable=False)
@@ -23,5 +23,9 @@ class Rol(SQLModel, table=True):
     )
 
     usuarios: list["Usuario"] = Relationship(
-        back_populates="roles", link_model=UsuarioRol
+        back_populates="roles", link_model=UsuarioRol,
+        sa_relationship_kwargs={
+            "primaryjoin": "Rol.id==UsuarioRol.rol_id",
+            "secondaryjoin": "Usuario.id==UsuarioRol.usuario_id"
+        }
     )

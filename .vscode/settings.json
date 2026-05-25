@@ -1,0 +1,6 @@
+{
+  "python.defaultInterpreterPath": "D:\\Descargas\\1-ANACONDA\\python.exe",
+  "python.analysis.extraPaths": [
+    "./backend"
+  ]
+}

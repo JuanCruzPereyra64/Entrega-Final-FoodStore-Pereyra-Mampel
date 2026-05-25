@@ -17,7 +17,7 @@ class Pedido(SQLModel, table=True):
 
     id: Optional[int] = Field(
         default=None, 
-        sa_column=Column(BigInteger, primary_key=True, autoincrement=True)
+        primary_key=True
     )
     usuario_id: int = Field(
         sa_column=Column(BigInteger, ForeignKey("usuarios.id", ondelete="RESTRICT"), nullable=False)

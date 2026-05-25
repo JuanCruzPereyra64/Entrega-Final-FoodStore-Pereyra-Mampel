@@ -4,9 +4,10 @@ from backend.database import get_uow
 from backend.schemas.categoria import CategoriaCreate, CategoriaRead, CategoriaUpdate
 from backend.services import categoria_service
 from backend.uow.unit_of_work import UnitOfWork
+from backend.models.usuario import Usuario
+from backend.api.deps import check_role
 
 router = APIRouter(prefix="/categorias", tags=["Categorías"])
-
 
 @router.get("/", response_model=list[CategoriaRead])
 def get_categorias(
@@ -17,26 +18,35 @@ def get_categorias(
     with uow:
         return categoria_service.get_all(uow, offset, limit)
 
-
 @router.get("/{categoria_id}", response_model=CategoriaRead)
 def get_categoria(categoria_id: int, uow: UnitOfWork = Depends(get_uow)):
     with uow:
         return categoria_service.get_by_id(uow, categoria_id)
 
-
 @router.post("/", response_model=CategoriaRead, status_code=201)
-def create_categoria(data: CategoriaCreate, uow: UnitOfWork = Depends(get_uow)):
+def create_categoria(
+    data: CategoriaCreate, 
+    current_user: Usuario = Depends(check_role(["ADMIN", "STOCK"])),
+    uow: UnitOfWork = Depends(get_uow)
+):
     with uow:
         return categoria_service.create(uow, data)
 
-
 @router.put("/{categoria_id}", response_model=CategoriaRead)
-def update_categoria(categoria_id: int, data: CategoriaUpdate, uow: UnitOfWork = Depends(get_uow)):
+def update_categoria(
+    categoria_id: int, 
+    data: CategoriaUpdate, 
+    current_user: Usuario = Depends(check_role(["ADMIN", "STOCK"])),
+    uow: UnitOfWork = Depends(get_uow)
+):
     with uow:
         return categoria_service.update(uow, categoria_id, data)
 
-
 @router.delete("/{categoria_id}", status_code=204)
-def delete_categoria(categoria_id: int, uow: UnitOfWork = Depends(get_uow)):
+def delete_categoria(
+    categoria_id: int, 
+    current_user: Usuario = Depends(check_role(["ADMIN", "STOCK"])),
+    uow: UnitOfWork = Depends(get_uow)
+):
     with uow:
         categoria_service.delete(uow, categoria_id)

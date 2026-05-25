@@ -11,7 +11,7 @@ if TYPE_CHECKING:
 class Ingrediente(SQLModel, table=True):
     __tablename__ = "ingredientes"
 
-    id: Optional[int] = Field(default=None, sa_column=Column(BigInteger, primary_key=True, autoincrement=True))
+    id: Optional[int] = Field(default=None, primary_key=True)
     nombre: str = Field(sa_column=Column(String(100), unique=True, nullable=False))
     descripcion: Optional[str] = Field(default=None, sa_column=Column(Text))
     es_alergeno: bool = Field(default=False, sa_column=Column(Boolean, nullable=False, default=False))
