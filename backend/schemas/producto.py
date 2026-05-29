@@ -31,6 +31,14 @@ class ProductoUpdate(SQLModel):
     imagenes_url: Optional[list[str]] = None
 
 
+class ProductoReadBasico(SQLModel):
+    id: int
+    nombre: str
+    precio_base: float
+    descripcion: Optional[str] = None
+    imagenes_url: list[str] = []
+
+
 class ProductoRead(SQLModel):
     id: int
     nombre: str

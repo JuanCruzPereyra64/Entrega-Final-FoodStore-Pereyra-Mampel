@@ -84,6 +84,19 @@ export const authApi = {
   me: () => request<import('../types').UsuarioRead>('/usuarios/me'),
   register: (data: import('../types').UsuarioCreate) =>
     request<import('../types').UsuarioRead>('/usuarios/registro', { method: 'POST', body: JSON.stringify(data) }),
+  updateMe: (data: import('../types').UsuarioUpdate) =>
+    request<import('../types').UsuarioRead>('/usuarios/me', { method: 'PUT', body: JSON.stringify(data) }),
+}
+
+export const direccionesApi = {
+  getAll: () => request<import('../types').Direccion[]>('/direcciones/'),
+  create: (data: import('../types').DireccionCreate) =>
+    request<import('../types').Direccion>('/direcciones/', { method: 'POST', body: JSON.stringify(data) }),
+  update: (id: number, data: import('../types').DireccionUpdate) =>
+    request<import('../types').Direccion>(`/direcciones/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+  delete: (id: number) => request<void>(`/direcciones/${id}`, { method: 'DELETE' }),
+  setPrincipal: (id: number) =>
+    request<import('../types').Direccion>(`/direcciones/${id}/principal`, { method: 'PATCH' }),
 }
 
 export const pedidosApi = {

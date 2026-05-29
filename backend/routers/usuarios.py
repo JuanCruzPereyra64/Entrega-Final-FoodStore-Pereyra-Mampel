@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, status, Response
 from backend.database import get_uow
-from backend.schemas.usuario import UsuarioCreate, UsuarioRead, UsuarioLogin
+from backend.schemas.usuario import UsuarioCreate, UsuarioRead, UsuarioLogin, UsuarioUpdate
 from backend.core.security import create_access_token
 from backend.services import usuario_service
 from backend.uow.unit_of_work import UnitOfWork
@@ -37,3 +37,13 @@ def logout(response: Response):
 @router.get("/me", response_model=UsuarioRead)
 def get_me(current_user: Usuario = Depends(get_current_user)):
     return current_user
+
+@router.put("/me", response_model=UsuarioRead)
+def update_me(
+    data: UsuarioUpdate,
+    current_user: Usuario = Depends(get_current_user),
+    uow: UnitOfWork = Depends(get_uow)
+):
+    with uow:
+        usuario = uow.usuarios.get_by_id(current_user.id)
+        return usuario_service.actualizar_usuario(uow, usuario, data)

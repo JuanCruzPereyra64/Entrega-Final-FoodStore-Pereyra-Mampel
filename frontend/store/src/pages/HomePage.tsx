@@ -29,7 +29,7 @@ export function HomePage() {
             <p className="text-sm text-slate-500 flex-1 my-2 line-clamp-2">{p.descripcion}</p>
             <div className="flex items-center justify-between mt-4">
               <span className="text-xl font-bold text-primary">${p.precio_base}</span>
-              <Button size="sm" icon={ShoppingCart} onClick={() => addItem({ id: Date.now(), producto_id: p.id!, cantidad: 1, precio: p.precio_base, nombre: p.nombre })}>
+              <Button size="sm" icon={ShoppingCart} onClick={() => addItem({ id: Date.now(), producto_id: p.id!, cantidad: 1, precio: p.precio_base, nombre: p.nombre, imagen_url: p.imagenes_url?.[0] })}>
                 Agregar
               </Button>
             </div>

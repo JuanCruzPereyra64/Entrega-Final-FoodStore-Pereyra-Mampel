@@ -1,11 +1,12 @@
 import { NavLink, useLocation, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { 
+import {
   ChefHat,
   ShoppingCart,
   ListOrdered,
   LogOut,
-  User
+  User,
+  UserCircle
 } from 'lucide-react'
 import { useCartStore } from '../../store/useCartStore'
 import { useAuthStore } from '../../store/useAuthStore'
@@ -53,8 +54,8 @@ export function MainLayout({ children }: LayoutProps) {
                     to="/mis-pedidos"
                     className={({ isActive }) => `
                       flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-200
-                      ${isActive 
-                        ? 'bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white' 
+                      ${isActive
+                        ? 'bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white'
                         : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/50'
                       }
                     `}
@@ -62,7 +63,21 @@ export function MainLayout({ children }: LayoutProps) {
                     <ListOrdered size={20} />
                     <span className="hidden sm:inline">Mis Pedidos</span>
                   </NavLink>
-                  
+
+                  <NavLink
+                    to="/mi-perfil"
+                    className={({ isActive }) => `
+                      flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-200
+                      ${isActive
+                        ? 'bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white'
+                        : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/50'
+                      }
+                    `}
+                  >
+                    <UserCircle size={20} />
+                    <span className="hidden sm:inline">Mi Perfil</span>
+                  </NavLink>
+
                   <button
                     onClick={handleLogout}
                     className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium text-red-600 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors"

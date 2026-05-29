@@ -22,6 +22,9 @@ def get_pedidos(
             
         for p in pedidos:
             _ = p.detalles
+            if p.detalles:
+                for d in p.detalles:
+                    _ = d.producto
             _ = p.historial
         return pedidos
 
@@ -34,6 +37,9 @@ def crear_pedido(
     with uow:
         pedido = pedido_service.crear_pedido(uow, current_user.id, data)
         _ = pedido.detalles
+        if pedido.detalles:
+            for d in pedido.detalles:
+                _ = d.producto
         _ = pedido.historial
         return pedido
 
@@ -51,6 +57,9 @@ def transicionar_estado(
     with uow:
         pedido = pedido_service.transicionar_estado(uow, pedido_id, data.nuevo_estado_codigo, current_user.id, data.motivo)
         _ = pedido.detalles
+        if pedido.detalles:
+            for d in pedido.detalles:
+                _ = d.producto
         _ = pedido.historial
         return pedido
 
@@ -63,5 +72,8 @@ def cancelar_pedido_cliente(
     with uow:
         pedido = pedido_service.cancelar_pedido_cliente(uow, pedido_id, current_user.id)
         _ = pedido.detalles
+        if pedido.detalles:
+            for d in pedido.detalles:
+                _ = d.producto
         _ = pedido.historial
         return pedido

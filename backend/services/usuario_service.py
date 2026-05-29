@@ -1,7 +1,7 @@
 from fastapi import HTTPException, status
 from passlib.context import CryptContext
 from backend.models.usuario import Usuario
-from backend.schemas.usuario import UsuarioCreate
+from backend.schemas.usuario import UsuarioCreate, UsuarioUpdate
 from backend.uow.unit_of_work import UnitOfWork
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -37,6 +37,14 @@ def registrar_usuario(uow: UnitOfWork, data: UsuarioCreate) -> Usuario:
     )
     
     uow.usuarios.add(usuario)
+    uow.session.flush()
+    uow.session.refresh(usuario)
+    return usuario
+
+
+def actualizar_usuario(uow: UnitOfWork, usuario: Usuario, data: UsuarioUpdate) -> Usuario:
+    for k, v in data.model_dump(exclude_unset=True).items():
+        setattr(usuario, k, v)
     uow.session.flush()
     uow.session.refresh(usuario)
     return usuario

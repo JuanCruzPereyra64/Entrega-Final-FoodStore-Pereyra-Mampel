@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { Plus, Edit2, Trash2, Leaf, Settings2 } from 'lucide-react'
 import { Modal } from '../components/common/Modal'
 import { Button } from '../components/common/Button'
@@ -75,6 +75,12 @@ function UnidadesMedidaManagerModal({ open, onClose }: { open: boolean, onClose:
 
 export function IngredientesPage() {
   const { data: ingredientes, isLoading, isError } = useIngredientes()
+
+  const ingredientesOrdenados = useMemo(() => {
+    if (!ingredientes) return []
+    return [...ingredientes].sort((a, b) => (a.stock_actual || 0) - (b.stock_actual || 0))
+  }, [ingredientes])
+
   const createMutation = useCreateIngrediente()
   const updateMutation = useUpdateIngrediente()
   const deleteMutation = useDeleteIngrediente()
@@ -153,7 +159,7 @@ export function IngredientesPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-              {ingredientes?.map((ing) => (
+              {ingredientesOrdenados.map((ing) => (
                 <tr key={ing.id} className="premium-table-row">
                   <td className="px-6 py-4 font-mono text-xs text-slate-400">#{ing.id}</td>
                   <td className="px-6 py-4">

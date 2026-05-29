@@ -2,6 +2,7 @@ from decimal import Decimal
 from datetime import datetime
 from typing import Optional, Any
 from sqlmodel import SQLModel
+from backend.schemas.producto import ProductoReadBasico
 
 
 class DetallePedidoBase(SQLModel):
@@ -20,3 +21,4 @@ class DetallePedidoRead(DetallePedidoBase):
     precio_unitario_snap: Decimal
     subtotal_snap: Decimal
     created_at: datetime
+    producto: Optional[ProductoReadBasico] = None

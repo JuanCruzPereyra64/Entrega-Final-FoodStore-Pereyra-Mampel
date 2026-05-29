@@ -31,6 +31,7 @@ export interface DetallePedido {
   precio_unitario: number
   cantidad: number
   subtotal: number
+  producto?: Producto
 }
 
 export interface HistorialEstado {
@@ -78,6 +79,37 @@ export interface UsuarioCreate {
   email: string
   password: string
   celular?: string
+}
+
+export interface UsuarioUpdate {
+  nombre?: string
+  apellido?: string
+  celular?: string
+}
+
+export interface Direccion {
+  id: number
+  usuario_id: number
+  etiqueta?: string | null
+  linea1: string
+  linea2?: string | null
+  ciudad: string
+  es_principal: boolean
+}
+
+export interface DireccionCreate {
+  etiqueta?: string
+  linea1: string
+  linea2?: string
+  ciudad: string
+  es_principal?: boolean
+}
+
+export interface DireccionUpdate {
+  etiqueta?: string
+  linea1?: string
+  linea2?: string
+  ciudad?: string
 }
 
 export interface CategoriaCreate {

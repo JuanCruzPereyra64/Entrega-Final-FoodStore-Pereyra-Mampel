@@ -5,6 +5,7 @@ import { CartPage } from './pages/CartPage'
 import { PedidosPage } from './pages/PedidosPage'
 import { LoginPage } from './pages/LoginPage'
 import { RegisterPage } from './pages/RegisterPage'
+import { PerfilPage } from './pages/PerfilPage'
 
 function App() {
   return (
@@ -18,6 +19,7 @@ function App() {
               <Route path="/" element={<HomePage />} />
               <Route path="/carrito" element={<CartPage />} />
               <Route path="/mis-pedidos" element={<PedidosPage />} />
+              <Route path="/mi-perfil" element={<PerfilPage />} />
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
           </MainLayout>

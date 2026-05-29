@@ -33,6 +33,7 @@ def crear_pedido(uow: UnitOfWork, usuario_id: int, data: PedidoCreate) -> Pedido
             subtotal_snap=subtotal_detalle,
             personalizacion=det_data.personalizacion
         )
+        detalle.producto = producto
         detalles_models.append(detalle)
         
         # Validar y descontar stock de ingredientes
