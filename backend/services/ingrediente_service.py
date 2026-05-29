@@ -2,6 +2,7 @@ from fastapi import HTTPException
 from backend.models.ingrediente import Ingrediente
 from backend.schemas.ingrediente import IngredienteCreate, IngredienteUpdate
 from backend.uow.unit_of_work import UnitOfWork
+from backend.services import movimiento_stock_service
 
 
 def get_all(uow: UnitOfWork, offset: int = 0, limit: int = 100) -> list[Ingrediente]:
@@ -15,16 +16,37 @@ def get_by_id(uow: UnitOfWork, ingrediente_id: int) -> Ingrediente:
     return ingrediente
 
 
-def create(uow: UnitOfWork, data: IngredienteCreate) -> Ingrediente:
+def create(uow: UnitOfWork, data: IngredienteCreate, usuario_id: int = None) -> Ingrediente:
     ingrediente = Ingrediente.model_validate(data)
     uow.ingredientes.add(ingrediente)
     uow.session.flush()
+    
+    if ingrediente.stock_actual > 0:
+        movimiento_stock_service.registrar_movimiento(
+            uow, 
+            ingrediente_id=ingrediente.id, 
+            cantidad=ingrediente.stock_actual, 
+            motivo="Stock inicial", 
+            usuario_id=usuario_id
+        )
+        
     uow.session.refresh(ingrediente)
     return ingrediente
 
 
-def update(uow: UnitOfWork, ingrediente_id: int, data: IngredienteUpdate) -> Ingrediente:
+def update(uow: UnitOfWork, ingrediente_id: int, data: IngredienteUpdate, usuario_id: int = None) -> Ingrediente:
     ingrediente = get_by_id(uow, ingrediente_id)
+    
+    if data.stock_actual is not None and data.stock_actual != ingrediente.stock_actual:
+        diferencia = data.stock_actual - ingrediente.stock_actual
+        movimiento_stock_service.registrar_movimiento(
+            uow, 
+            ingrediente_id=ingrediente.id, 
+            cantidad=diferencia, 
+            motivo="Ajuste manual", 
+            usuario_id=usuario_id
+        )
+        
     for key, value in data.model_dump(exclude_unset=True).items():
         setattr(ingrediente, key, value)
     uow.ingredientes.add(ingrediente)

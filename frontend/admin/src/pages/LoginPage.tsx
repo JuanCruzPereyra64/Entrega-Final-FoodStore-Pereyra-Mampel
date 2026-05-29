@@ -56,6 +56,15 @@ export function LoginPage() {
           <Button type="submit" className="w-full py-4" isLoading={loading}>
             Ingresar
           </Button>
+          <div className="pt-4 flex justify-center border-t border-slate-100 dark:border-slate-800">
+            <button
+              type="button"
+              onClick={() => { setEmail('admin@admin.com'); setPassword('admin'); }}
+              className="text-xs font-semibold text-slate-400 hover:text-primary transition-colors"
+            >
+              Autocompletar Admin (Demo)
+            </button>
+          </div>
         </form>
       </div>
     </div>

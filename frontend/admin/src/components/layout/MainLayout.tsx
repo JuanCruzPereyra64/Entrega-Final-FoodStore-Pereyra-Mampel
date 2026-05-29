@@ -7,7 +7,9 @@ import {
   ChefHat,
   Menu,
   Home,
-  ClipboardList
+  ClipboardList,
+  Package,
+  TrendingUp
 } from 'lucide-react'
 import { useState } from 'react'
 
@@ -20,7 +22,9 @@ const navItems = [
   { to: '/pedidos', label: 'Pedidos', icon: ClipboardList },
   { to: '/categorias', label: 'Categorías', icon: LayoutDashboard },
   { to: '/ingredientes', label: 'Ingredientes', icon: Leaf },
+  { to: '/stock', label: 'Mov. Stock', icon: Package },
   { to: '/productos', label: 'Productos', icon: UtensilsCrossed },
+  { to: '/ventas', label: 'Ingresos', icon: TrendingUp },
 ]
 
 export function MainLayout({ children }: LayoutProps) {

@@ -2,12 +2,60 @@ export interface Categoria {
   id: number
   nombre: string
   descripcion?: string
+  parent_id?: number | null
+}
+
+export interface DetallePedido {
+  id: number
+  producto_id: number
+  nombre_producto: string
+  precio_unitario: number
+  cantidad: number
+  subtotal: number
+}
+
+export interface HistorialEstado {
+  id: number
+  estado_codigo: string
+  created_at: string
+  motivo?: string
+}
+
+export interface Pedido {
+  id: number
+  usuario_id: number
+  estado_codigo: string
+  subtotal: number
+  descuento: number
+  costo_envio: number
+  total: number
+  forma_pago_codigo: string
+  direccion_id?: number | null
+  notas?: string | null
+  created_at: string
+  updated_at: string
+  detalles: DetallePedido[]
+  historial: HistorialEstado[]
+}
+
+export interface UsuarioLogin {
+  email: string
+  password: string
+}
+
+export interface UnidadMedida {
+  id: number
+  nombre: string
 }
 
 export interface Ingrediente {
   id: number
   nombre: string
-  unidad_medida: string
+  unidad_medida_id: number
+  unidad_medida?: UnidadMedida
+  es_alergeno: boolean
+  stock_actual: number
+  stock_minimo: number
 }
 
 export interface Producto {
@@ -29,7 +77,15 @@ export interface CategoriaCreate {
 
 export interface IngredienteCreate {
   nombre: string
-  unidad_medida: string
+  unidad_medida_id: number
+  es_alergeno: boolean
+  stock_actual: number
+  stock_minimo: number
+}
+
+export interface ProductoIngredienteCreate {
+  id: number
+  cantidad_requerida: number
 }
 
 export interface ProductoCreate {
@@ -37,8 +93,20 @@ export interface ProductoCreate {
   precio_base: number
   descripcion?: string
   categoria_ids: number[]
-  ingrediente_ids: number[]
+  ingredientes: ProductoIngredienteCreate[]
   stock_cantidad?: number
   disponible?: boolean
   imagenes_url?: string[]
+}
+
+export interface MovimientoStock {
+  id: number
+  ingrediente_id: int
+  cantidad: number
+  tipo: string
+  motivo: string
+  usuario_id?: number
+  created_at: string
+  ingrediente_nombre?: string
+  usuario_nombre?: string
 }

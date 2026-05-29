@@ -16,12 +16,14 @@ def get_ingredientes(
     limit: Annotated[int, Query(ge=1, le=100)] = 100,
 ):
     with uow:
-        return ingrediente_service.get_all(uow, offset, limit)
+        ingredientes = ingrediente_service.get_all(uow, offset, limit)
+        return [IngredienteRead.model_validate(i) for i in ingredientes]
 
 @router.get("/{ingrediente_id}", response_model=IngredienteRead)
 def get_ingrediente(ingrediente_id: int, uow: UnitOfWork = Depends(get_uow)):
     with uow:
-        return ingrediente_service.get_by_id(uow, ingrediente_id)
+        ingrediente = ingrediente_service.get_by_id(uow, ingrediente_id)
+        return IngredienteRead.model_validate(ingrediente)
 
 @router.post("/", response_model=IngredienteRead, status_code=201)
 def create_ingrediente(
@@ -30,7 +32,8 @@ def create_ingrediente(
     uow: UnitOfWork = Depends(get_uow)
 ):
     with uow:
-        return ingrediente_service.create(uow, data)
+        ingrediente = ingrediente_service.create(uow, data, current_user.id)
+        return IngredienteRead.model_validate(ingrediente)
 
 @router.put("/{ingrediente_id}", response_model=IngredienteRead)
 def update_ingrediente(
@@ -40,7 +43,8 @@ def update_ingrediente(
     uow: UnitOfWork = Depends(get_uow)
 ):
     with uow:
-        return ingrediente_service.update(uow, ingrediente_id, data)
+        ingrediente = ingrediente_service.update(uow, ingrediente_id, data, current_user.id)
+        return IngredienteRead.model_validate(ingrediente)
 
 @router.delete("/{ingrediente_id}", status_code=204)
 def delete_ingrediente(

@@ -14,11 +14,13 @@ from backend.models.usuario import Usuario
 from backend.models.usuario_rol import UsuarioRol
 from backend.models.categoria import Categoria
 from backend.models.ingrediente import Ingrediente
+from backend.models.producto import Producto, ProductoCategoria, ProductoIngrediente
+from backend.models.unidad_medida import UnidadMedida
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 def run_seed():
-    print("Iniciando Seed de Base de Datos...")
+    print("Iniciando Seed de Base de Datos Súper Completo...")
     create_db_and_tables()
     
     uow = UnitOfWork()
@@ -45,51 +47,161 @@ def run_seed():
                 ))
                 
         print("Poblando Formas de Pago...")
-        formas_pago = ["EFECTIVO", "MERCADOPAGO"]
+        formas_pago = ["EFECTIVO", "MERCADOPAGO", "TARJETA_CREDITO", "TARJETA_DEBITO"]
         for codigo in formas_pago:
             if not uow.session.exec(select(FormaPago).where(FormaPago.codigo == codigo)).first():
                 uow.session.add(FormaPago(codigo=codigo, descripcion=f"Pago mediante {codigo}"))
                 
         uow.session.flush()
         
-        print("Creando Usuario Test...")
-        email = "test@test.com"
-        if not uow.usuarios.get_by_email(email):
-            hash_pwd = pwd_context.hash("123456")
-            user = Usuario(
-                nombre="Test", apellido="User", email=email, password_hash=hash_pwd
-            )
-            uow.usuarios.add(user)
-            uow.session.flush()
-            
-            rol_cliente = uow.session.exec(select(Rol).where(Rol.nombre == "CLIENT")).first()
-            if rol_cliente:
-                uow.session.add(UsuarioRol(usuario_id=user.id, rol_id=rol_cliente.id))
+        print("Creando Usuarios...")
+        usuarios_seed = [
+            ("test@test.com", "Test", "User", "123456", "CLIENT"),
+            ("admin@admin.com", "Admin", "Gómez", "admin", "ADMIN"),
+            ("cajero@food.com", "Carlos", "Cajero", "123456", "PEDIDOS"),
+            ("stock@food.com", "Sofía", "Stock", "123456", "STOCK"),
+        ]
+        
+        for email, nombre, apellido, pwd, rol_codigo in usuarios_seed:
+            user = uow.usuarios.get_by_email(email)
+            if not user:
+                hash_pwd = pwd_context.hash(pwd)
+                user = Usuario(nombre=nombre, apellido=apellido, email=email, password_hash=hash_pwd)
+                uow.usuarios.add(user)
+                uow.session.flush()
+                rol = uow.session.exec(select(Rol).where(Rol.nombre == rol_codigo)).first()
+                if rol:
+                    uow.session.add(UsuarioRol(usuario_id=user.id, rol_id=rol.id))
                 
-        print("Creando Usuario Admin...")
-        admin_email = "admin@admin.com"
-        if not uow.usuarios.get_by_email(admin_email):
-            hash_pwd = pwd_context.hash("admin")
-            admin_user = Usuario(
-                nombre="Admin", apellido="Admin", email=admin_email, password_hash=hash_pwd
-            )
-            uow.usuarios.add(admin_user)
-            uow.session.flush()
-            
-            rol_admin = uow.session.exec(select(Rol).where(Rol.nombre == "ADMIN")).first()
-            if rol_admin:
-                uow.session.add(UsuarioRol(usuario_id=admin_user.id, rol_id=rol_admin.id))
-                
-        print("Creando Categoria e Ingredientes Básicos...")
-        if not uow.session.exec(select(Categoria).where(Categoria.nombre == "Hamburguesas")).first():
-            uow.session.add(Categoria(nombre="Hamburguesas", descripcion="Nuestras clásicas"))
-            
-        ingredientes = ["Pan de Papa", "Medallón 120g", "Queso Cheddar"]
-        for ing_name in ingredientes:
-            if not uow.session.exec(select(Ingrediente).where(Ingrediente.nombre == ing_name)).first():
-                uow.session.add(Ingrediente(nombre=ing_name, es_alergeno=False))
+        print("Creando Categorías...")
+        categorias_data = [
+            ("Hamburguesas", "Nuestras clásicas y especiales"),
+            ("Pizzas", "A la piedra y masa madre"),
+            ("Bebidas", "Refrescos y cervezas"),
+            ("Postres", "Para terminar con algo dulce"),
+            ("Papas Fritas", "El acompañamiento ideal")
+        ]
+        categorias_obj = {}
+        for c_nombre, c_desc in categorias_data:
+            cat = uow.session.exec(select(Categoria).where(Categoria.nombre == c_nombre)).first()
+            if not cat:
+                cat = Categoria(nombre=c_nombre, descripcion=c_desc)
+                uow.session.add(cat)
+                uow.session.flush()
+            categorias_obj[c_nombre] = cat
 
-    print("Seed finalizado con éxito. Base de datos lista.")
+        print("Creando Unidades de Medida...")
+        unidades_data = ["g", "ml", "u", "kg"]
+        unidades_obj = {}
+        for u_nombre in unidades_data:
+            um = uow.session.exec(select(UnidadMedida).where(UnidadMedida.nombre == u_nombre)).first()
+            if not um:
+                um = UnidadMedida(nombre=u_nombre)
+                uow.session.add(um)
+                uow.session.flush()
+            unidades_obj[u_nombre] = um
+
+        print("Creando Ingredientes...")
+        ingredientes_data = [
+            ("Pan de Papa", False, "u"), ("Medallón 120g", False, "g"), ("Queso Cheddar", False, "g"),
+            ("Panceta Crocante", False, "g"), ("Salsa BBQ", False, "ml"), ("Cebolla Caramelizada", False, "g"),
+            ("Masa Madre", False, "g"), ("Salsa de Tomate", False, "ml"), ("Muzzarella", False, "g"),
+            ("Pepperoni", False, "g"), ("Papas Bastón", False, "g"), ("Helado de Vainilla", False, "g"),
+            ("Brownie", True, "u"), ("Tomate Fresco", False, "u"), ("Lechuga", False, "g")
+        ]
+        ingredientes_obj = {}
+        for i_nombre, alergeno, unidad in ingredientes_data:
+            ing = uow.session.exec(select(Ingrediente).where(Ingrediente.nombre == i_nombre)).first()
+            if not ing:
+                ing = Ingrediente(nombre=i_nombre, es_alergeno=alergeno, unidad_medida_id=unidades_obj[unidad].id)
+                uow.session.add(ing)
+                uow.session.flush()
+            ingredientes_obj[i_nombre] = ing
+            
+        print("Creando Productos...")
+        productos_data = [
+            {
+                "nombre": "Doble Queso Bacon",
+                "descripcion": "Doble medallón, cuádruple cheddar, panceta crocante y pan de papa.",
+                "precio": 8500,
+                "stock": 50,
+                "categoria": "Hamburguesas",
+                "ingredientes": ["Pan de Papa", "Medallón 120g", "Queso Cheddar", "Panceta Crocante"]
+            },
+            {
+                "nombre": "Classic Burger",
+                "descripcion": "Medallón simple con lechuga, tomate y queso cheddar.",
+                "precio": 6500,
+                "stock": 100,
+                "categoria": "Hamburguesas",
+                "ingredientes": ["Pan de Papa", "Medallón 120g", "Queso Cheddar", "Lechuga", "Tomate Fresco"]
+            },
+            {
+                "nombre": "Pizza Pepperoni",
+                "descripcion": "Masa madre, salsa, extra muzzarella y pepperoni premium.",
+                "precio": 12000,
+                "stock": 30,
+                "categoria": "Pizzas",
+                "ingredientes": ["Masa Madre", "Salsa de Tomate", "Muzzarella", "Pepperoni"]
+            },
+            {
+                "nombre": "Pizza Margarita",
+                "descripcion": "La clásica de masa madre con salsa y muzzarella.",
+                "precio": 10000,
+                "stock": 40,
+                "categoria": "Pizzas",
+                "ingredientes": ["Masa Madre", "Salsa de Tomate", "Muzzarella"]
+            },
+            {
+                "nombre": "Papas con Cheddar y Panceta",
+                "descripcion": "Porción abundante bañada en cheddar fundido y lluvia de panceta.",
+                "precio": 4500,
+                "stock": 200,
+                "categoria": "Papas Fritas",
+                "ingredientes": ["Papas Bastón", "Queso Cheddar", "Panceta Crocante"]
+            },
+            {
+                "nombre": "Volcán de Chocolate",
+                "descripcion": "Volcán tibio de chocolate (brownie) con bocha de helado de vainilla.",
+                "precio": 5500,
+                "stock": 15,
+                "categoria": "Postres",
+                "ingredientes": ["Brownie", "Helado de Vainilla"]
+            },
+            {
+                "nombre": "Coca Cola 500ml",
+                "descripcion": "Gaseosa línea Coca Cola bien fría.",
+                "precio": 1500,
+                "stock": 300,
+                "categoria": "Bebidas",
+                "ingredientes": []
+            }
+        ]
+        
+        for p_data in productos_data:
+            prod = uow.session.exec(select(Producto).where(Producto.nombre == p_data["nombre"])).first()
+            if not prod:
+                prod = Producto(
+                    nombre=p_data["nombre"],
+                    descripcion=p_data["descripcion"],
+                    precio_base=p_data["precio"],
+                    stock_cantidad=p_data["stock"],
+                    disponible=True,
+                    tiempo_prep_min=15
+                )
+                uow.session.add(prod)
+                uow.session.flush()
+                
+                # Asignar categoría
+                cat = categorias_obj[p_data["categoria"]]
+                uow.session.add(ProductoCategoria(producto_id=prod.id, categoria_id=cat.id, es_principal=True))
+                
+                # Asignar ingredientes
+                for ing_name in p_data["ingredientes"]:
+                    ing = ingredientes_obj[ing_name]
+                    uow.session.add(ProductoIngrediente(producto_id=prod.id, ingrediente_id=ing.id, es_removible=True, es_opcional=False))
+                    
+        print("Seed Súper Completo finalizado con éxito. Base de datos lista.")
 
 if __name__ == "__main__":
     run_seed()

@@ -11,11 +11,15 @@ router = APIRouter(prefix="/pedidos", tags=["Pedidos"])
 
 @router.get("/", response_model=list[PedidoReadConDetalles])
 def get_pedidos(
-    current_user: Usuario = Depends(check_role(["ADMIN", "STOCK", "PEDIDOS"])), 
+    current_user: Usuario = Depends(check_role(["CLIENT", "ADMIN", "STOCK", "PEDIDOS"])), 
     uow: UnitOfWork = Depends(get_uow)
 ):
     with uow:
-        pedidos = pedido_service.get_all(uow)
+        if any(r.nombre == "CLIENT" for r in current_user.roles):
+            pedidos = pedido_service.get_by_usuario(uow, current_user.id)
+        else:
+            pedidos = pedido_service.get_all(uow)
+            
         for p in pedidos:
             _ = p.detalles
             _ = p.historial
@@ -46,6 +50,18 @@ def transicionar_estado(
 ):
     with uow:
         pedido = pedido_service.transicionar_estado(uow, pedido_id, data.nuevo_estado_codigo, current_user.id, data.motivo)
+        _ = pedido.detalles
+        _ = pedido.historial
+        return pedido
+
+@router.patch("/{pedido_id}/cancelar", response_model=PedidoReadConDetalles)
+def cancelar_pedido_cliente(
+    pedido_id: int, 
+    current_user: Usuario = Depends(check_role(["CLIENT"])), 
+    uow: UnitOfWork = Depends(get_uow)
+):
+    with uow:
+        pedido = pedido_service.cancelar_pedido_cliente(uow, pedido_id, current_user.id)
         _ = pedido.detalles
         _ = pedido.historial
         return pedido

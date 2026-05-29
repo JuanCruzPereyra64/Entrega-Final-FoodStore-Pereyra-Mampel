@@ -14,6 +14,7 @@ import { useCategorias } from '../hooks/useCategorias'
 import { useIngredientes } from '../hooks/useIngredientes'
 import { Card } from '../components/common/Card'
 import { Button } from '../components/common/Button'
+import { formatCurrency } from '../utils/format'
 
 export function HomePage() {
   const { data: productos } = useProductos()
@@ -108,7 +109,7 @@ export function HomePage() {
                 <p className="text-slate-500 dark:text-slate-400 mt-1">{masCaro.categorias?.[0]?.nombre || 'General'}</p>
               </div>
               <div className="px-6 py-2 rounded-2xl bg-slate-50 dark:bg-slate-902 text-accent font-display font-bold text-2xl">
-                ${masCaro.precio_base.toFixed(2)}
+                {formatCurrency(Number(masCaro.precio_base) || 0)}
               </div>
               <p className="text-sm text-slate-400">Es el producto de mayor valor en tu carta actual.</p>
               <Link to={`/productos/${masCaro.id}`} className="pt-4">

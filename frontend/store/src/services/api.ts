@@ -81,10 +81,13 @@ export const authApi = {
   login: (data: import('../types').UsuarioLogin) =>
     request<{message: string, rol: string[]}>('/usuarios/login', { method: 'POST', body: JSON.stringify(data) }),
   logout: () => request<{message: string}>('/usuarios/logout', { method: 'POST' }),
-  me: () => request<import('../types').UsuarioRead>('/usuarios/me')
+  me: () => request<import('../types').UsuarioRead>('/usuarios/me'),
+  register: (data: import('../types').UsuarioCreate) =>
+    request<import('../types').UsuarioRead>('/usuarios/registro', { method: 'POST', body: JSON.stringify(data) }),
 }
 
 export const pedidosApi = {
   getAll: () => request<import('../types').Pedido[]>('/pedidos/'),
   create: (data: any) => request<import('../types').Pedido>('/pedidos/', { method: 'POST', body: JSON.stringify(data) }),
+  cancelar: (id: number) => request<import('../types').Pedido>(`/pedidos/${id}/cancelar`, { method: 'PATCH' }),
 }

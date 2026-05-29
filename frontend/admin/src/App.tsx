@@ -8,6 +8,8 @@ import { ProductoDetallePage } from './pages/ProductoDetallePage'
 import { AuthGuard } from './components/layout/AuthGuard'
 import { LoginPage } from './pages/LoginPage'
 import { GestorPedidosPage } from './pages/GestorPedidosPage'
+import { StockPage } from './pages/StockPage'
+import { VentasPage } from './pages/VentasPage'
 
 function App() {
   return (
@@ -23,6 +25,8 @@ function App() {
               <Route path="/ingredientes" element={<AuthGuard allowedRoles={['ADMIN', 'STOCK']}><IngredientesPage /></AuthGuard>} />
               <Route path="/productos" element={<AuthGuard allowedRoles={['ADMIN', 'STOCK']}><ProductosPage /></AuthGuard>} />
               <Route path="/productos/:id" element={<AuthGuard allowedRoles={['ADMIN', 'STOCK']}><ProductoDetallePage /></AuthGuard>} />
+              <Route path="/stock" element={<AuthGuard allowedRoles={['ADMIN', 'STOCK']}><StockPage /></AuthGuard>} />
+              <Route path="/ventas" element={<AuthGuard allowedRoles={['ADMIN']}><VentasPage /></AuthGuard>} />
               <Route path="/pedidos" element={<AuthGuard allowedRoles={['ADMIN', 'PEDIDOS']}><GestorPedidosPage /></AuthGuard>} />
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>

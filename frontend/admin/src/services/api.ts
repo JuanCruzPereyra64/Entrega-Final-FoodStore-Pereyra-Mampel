@@ -88,3 +88,21 @@ export const pedidosApi = {
   updateEstado: (id: number, estado_codigo: string) =>
     request<import('../types').Pedido>(`/pedidos/${id}/estado`, { method: 'PUT', body: JSON.stringify({ nuevo_estado_codigo: estado_codigo }) }),
 }
+
+export const uploadApi = {
+  uploadImage: async (file: File) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    const res = await apiClient.post<{url: string}>('/upload', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    });
+    return res.data;
+  }
+}
+
+export const stockApi = {
+  getMovimientos: (ingredienteId?: number) => {
+    const params = ingredienteId ? `?ingrediente_id=${ingredienteId}` : ''
+    return request<import('../types').MovimientoStock[]>(`/stock/movimientos${params}`)
+  }
+}

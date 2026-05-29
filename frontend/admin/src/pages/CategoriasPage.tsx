@@ -170,7 +170,7 @@ export function CategoriasPage() {
             </select>
           </div>
           
-          <div className="pt-2">
+          <div className="pt-2 pb-4">
             <Button
               type="submit"
               className="w-full py-4 text-base"

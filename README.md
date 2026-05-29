@@ -5,14 +5,14 @@ Video: https://www.youtube.com/watch?v=hzjdq_WjNwA
 Aplicación web Full-Stack para la gestión y venta de productos alimenticios (E-Commerce), separada en dos módulos principales: una tienda para clientes y un panel de administración para empleados/dueños.
 
 **Tecnologías Principales:**
-- **Backend:** Python, FastAPI, SQLModel (SQLAlchemy + Pydantic), SQLite
+- **Backend:** Python, FastAPI, SQLModel (SQLAlchemy + Pydantic), PostgreSQL, Docker
 - **Frontend (Store & Admin):** React, TypeScript, Vite, Tailwind CSS 4, Zustand, TanStack Query (React Query), React Router DOM
 
 ## Arquitectura del Proyecto
 
 El proyecto está dividido en tres partes fundamentales:
 
-- `backend/`: API RESTful encargada de la lógica de negocio, autenticación mediante JWT (HttpOnly Cookies), y persistencia de datos relacional con SQLite.
+- `backend/`: API RESTful encargada de la lógica de negocio, autenticación mediante JWT (HttpOnly Cookies), y persistencia de datos relacional con PostgreSQL.
 - `frontend/store/`: Interfaz de usuario pública (E-Commerce) donde los clientes pueden navegar por el catálogo de productos y agregar items al carrito.
 - `frontend/admin/`: Panel de control privado protegido por roles (ADMIN, STOCK) para la gestión del catálogo de productos, categorías, ingredientes y el seguimiento/cambio de estados de los pedidos.
 
@@ -22,9 +22,17 @@ El proyecto está dividido en tres partes fundamentales:
 - Python 3.10+
 - Node.js 18+
 
-### 1. Iniciar el Backend
+### 1. Iniciar la Base de Datos (PostgreSQL)
 
-El backend utiliza una base de datos SQLite embebida (`parcial_db.db`), por lo que no es necesario instalar motores de bases de datos adicionales ni Docker.
+El proyecto utiliza PostgreSQL mediante Docker. En la raíz del proyecto, ejecutar:
+
+```bash
+docker-compose up -d
+```
+
+Esto levantará el contenedor de Postgres en el puerto 5432 con los datos de conexión que se encuentran en el archivo `backend/.env`. (Asegurate de renombrar `.env.example` a `.env` si es necesario).
+
+### 2. Iniciar el Backend
 
 ```bash
 # Navegar a la carpeta raíz del proyecto

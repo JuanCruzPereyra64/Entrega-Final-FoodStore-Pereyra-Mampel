@@ -24,8 +24,8 @@ def create(uow: UnitOfWork, data: ProductoCreate) -> Producto:
         categoria_service.get_by_id(uow, cat_id)
     
     # Validar ingredientes
-    for ing_id in data.ingrediente_ids:
-        ingrediente_service.get_by_id(uow, ing_id)
+    for ing in data.ingredientes:
+        ingrediente_service.get_by_id(uow, ing.id)
         
     producto = Producto.model_validate(data, update={"categorias": [], "ingredientes": []})
     uow.productos.add(producto)
@@ -38,8 +38,8 @@ def create(uow: UnitOfWork, data: ProductoCreate) -> Producto:
         uow.session.add(link_cat)
 
     # Unir ingredientes
-    for ing_id in data.ingrediente_ids:
-        link_ing = ProductoIngrediente(producto_id=producto.id, ingrediente_id=ing_id)
+    for ing in data.ingredientes:
+        link_ing = ProductoIngrediente(producto_id=producto.id, ingrediente_id=ing.id, cantidad_requerida=ing.cantidad_requerida)
         uow.session.add(link_ing)
     
     uow.session.flush()
@@ -59,17 +59,17 @@ def update(uow: UnitOfWork, producto_id: int, data: ProductoUpdate) -> Producto:
             link_cat = ProductoCategoria(producto_id=producto.id, categoria_id=cat_id)
             uow.session.add(link_cat)
     
-    if data.ingrediente_ids is not None:
+    if data.ingredientes is not None:
         links_ing = uow.session.exec(select(ProductoIngrediente).where(ProductoIngrediente.producto_id == producto_id)).all()
         for link in links_ing:
             uow.session.delete(link)
         
-        for ing_id in data.ingrediente_ids:
-            ingrediente_service.get_by_id(uow, ing_id)
-            link = ProductoIngrediente(producto_id=producto_id, ingrediente_id=ing_id)
+        for ing in data.ingredientes:
+            ingrediente_service.get_by_id(uow, ing.id)
+            link = ProductoIngrediente(producto_id=producto_id, ingrediente_id=ing.id, cantidad_requerida=ing.cantidad_requerida)
             uow.session.add(link)
 
-    for key, value in data.model_dump(exclude_unset=True, exclude={"ingrediente_ids", "categoria_ids"}).items():
+    for key, value in data.model_dump(exclude_unset=True, exclude={"ingredientes", "categoria_ids"}).items():
         setattr(producto, key, value)
     
     uow.productos.add(producto)

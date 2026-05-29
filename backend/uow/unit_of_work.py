@@ -8,7 +8,8 @@ from backend.repositories.rol_repository import RolRepository
 from backend.repositories.pedido_repository import PedidoRepository
 from backend.repositories.estado_pedido_repository import EstadoPedidoRepository
 from backend.repositories.direccion_repository import DireccionRepository
-
+from backend.repositories.unidad_medida_repository import UnidadMedidaRepository
+from backend.repositories.movimiento_stock_repository import MovimientoStockRepository
 class UnitOfWork:
     def __init__(self):
         self.session: Session = None
@@ -20,7 +21,8 @@ class UnitOfWork:
         self.pedidos: PedidoRepository = None
         self.estados_pedido: EstadoPedidoRepository = None
         self.direcciones: DireccionRepository = None
-
+        self.unidades_medida: UnidadMedidaRepository = None
+        self.movimientos_stock: MovimientoStockRepository = None
     def __enter__(self):
         self.session = Session(engine, expire_on_commit=False)
         self.productos = ProductoRepository(self.session)
@@ -31,6 +33,8 @@ class UnitOfWork:
         self.pedidos = PedidoRepository(self.session)
         self.estados_pedido = EstadoPedidoRepository(self.session)
         self.direcciones = DireccionRepository(self.session)
+        self.unidades_medida = UnidadMedidaRepository(self.session)
+        self.movimientos_stock = MovimientoStockRepository(self.session)
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):

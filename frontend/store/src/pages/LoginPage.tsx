@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, Link } from 'react-router-dom'
 import { authApi } from '../services/api'
 import { useAuthStore } from '../store/useAuthStore'
 import { Button } from '../components/common/Button'
@@ -30,7 +30,7 @@ export function LoginPage() {
   return (
     <div className="min-h-[80vh] flex items-center justify-center">
       <div className="w-full max-w-md bg-white dark:bg-slate-900 p-8 rounded-3xl shadow-xl border border-slate-100 dark:border-slate-800">
-        <h1 className="text-3xl font-bold font-display text-center mb-8">Administración</h1>
+        <h1 className="text-3xl font-bold font-display text-center mb-8">Food Store</h1>
         {error && <div className="bg-red-50 text-red-600 p-4 rounded-xl mb-6 text-sm">{error}</div>}
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
@@ -56,6 +56,21 @@ export function LoginPage() {
           <Button type="submit" className="w-full py-4" isLoading={loading}>
             Ingresar
           </Button>
+          <div className="pt-4 flex flex-col items-center gap-3 border-t border-slate-100 dark:border-slate-800">
+            <button
+              type="button"
+              onClick={() => { setEmail('test@test.com'); setPassword('123456'); }}
+              className="text-xs font-semibold text-slate-400 hover:text-primary transition-colors"
+            >
+              Autocompletar Cliente (Demo)
+            </button>
+            <p className="text-sm text-slate-500">
+              ¿No tenés cuenta?{' '}
+              <Link to="/register" className="font-semibold text-primary hover:underline">
+                Registrate
+              </Link>
+            </p>
+          </div>
         </form>
       </div>
     </div>

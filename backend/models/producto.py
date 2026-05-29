@@ -24,6 +24,7 @@ class ProductoIngrediente(SQLModel, table=True):
     ingrediente_id: int = Field(sa_column=Column(BigInteger, ForeignKey("ingredientes.id", ondelete="CASCADE"), primary_key=True))
     es_removible: bool = Field(default=False, sa_column=Column(Boolean, nullable=False, default=False))
     es_opcional: bool = Field(default=False, sa_column=Column(Boolean, nullable=False, default=False))
+    cantidad_requerida: float = Field(default=1.0, sa_column=Column(Numeric(10, 2), nullable=False, default=1.0))
 
 
 class Producto(SQLModel, table=True):

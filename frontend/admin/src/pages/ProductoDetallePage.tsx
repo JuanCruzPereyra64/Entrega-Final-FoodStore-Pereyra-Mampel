@@ -6,6 +6,7 @@ import { useProducto, useAddIngrediente, useRemoveIngrediente } from '../hooks/u
 import { useIngredientes } from '../hooks/useIngredientes'
 import { Card, CardHeader } from '../components/common/Card'
 import { Button } from '../components/common/Button'
+import { formatCurrency } from '../utils/format'
 
 export function ProductoDetallePage() {
   const { id } = useParams<{ id: string }>()
@@ -77,7 +78,7 @@ export function ProductoDetallePage() {
                 </div>
                 <div className="text-right">
                   <p className="text-3xl font-display font-bold text-accent dark:text-accent">
-                    ${producto.precio_base.toFixed(2)}
+                    {formatCurrency(Number(producto.precio_base) || 0)}
                   </p>
                   <p className="text-xs text-slate-400 font-medium uppercase tracking-widest mt-1">Precio Sugerido</p>
                 </div>

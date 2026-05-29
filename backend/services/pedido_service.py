@@ -5,6 +5,10 @@ from backend.models.detalle_pedido import DetallePedido
 from backend.models.historial_estado_pedido import HistorialEstadoPedido
 from backend.schemas.pedido import PedidoCreate
 from backend.uow.unit_of_work import UnitOfWork
+from sqlmodel import select
+from backend.models.producto import ProductoIngrediente
+from backend.models.ingrediente import Ingrediente
+from backend.services import movimiento_stock_service
 
 def crear_pedido(uow: UnitOfWork, usuario_id: int, data: PedidoCreate) -> Pedido:
     subtotal = Decimal('0.00')
@@ -30,6 +34,29 @@ def crear_pedido(uow: UnitOfWork, usuario_id: int, data: PedidoCreate) -> Pedido
             personalizacion=det_data.personalizacion
         )
         detalles_models.append(detalle)
+        
+        # Validar y descontar stock de ingredientes
+        links_ing = uow.session.exec(select(ProductoIngrediente).where(ProductoIngrediente.producto_id == producto.id)).all()
+        for link in links_ing:
+            ing = uow.session.get(Ingrediente, link.ingrediente_id)
+            if ing:
+                cantidad_a_consumir = link.cantidad_requerida * det_data.cantidad
+                if ing.stock_actual < cantidad_a_consumir:
+                    raise HTTPException(
+                        status_code=400, 
+                        detail=f"Stock insuficiente de '{ing.nombre}' para preparar '{producto.nombre}'. Requerido: {cantidad_a_consumir}, Disponible: {ing.stock_actual}"
+                    )
+                ing.stock_actual -= cantidad_a_consumir
+                uow.session.add(ing)
+                
+                # Registrar el movimiento
+                movimiento_stock_service.registrar_movimiento(
+                    uow, 
+                    ingrediente_id=ing.id, 
+                    cantidad=-cantidad_a_consumir, 
+                    motivo=f"Venta (Preparación de {producto.nombre})", 
+                    usuario_id=usuario_id
+                )
         
     costo_envio = Decimal('500.00')  # Hardcoded. Podría provenir de config o logística.
     descuento = Decimal('0.00')
@@ -107,3 +134,22 @@ def transicionar_estado(uow: UnitOfWork, pedido_id: int, nuevo_estado_codigo: st
 
 def get_all(uow: UnitOfWork):
     return uow.pedidos.get_all()
+
+def get_by_usuario(uow: UnitOfWork, usuario_id: int):
+    return uow.pedidos.get_by_usuario_id(usuario_id)
+
+def cancelar_pedido_cliente(uow: UnitOfWork, pedido_id: int, usuario_id: int) -> Pedido:
+    pedido = uow.pedidos.get_by_id(pedido_id)
+    if not pedido:
+        raise HTTPException(status_code=404, detail="Pedido no encontrado")
+        
+    if pedido.usuario_id != usuario_id:
+        raise HTTPException(status_code=403, detail="No tienes permiso para cancelar este pedido")
+        
+    if pedido.estado_codigo not in ['PENDIENTE', 'CONFIRMADO']:
+        raise HTTPException(
+            status_code=400, 
+            detail=f"Solo podés cancelar pedidos en estado PENDIENTE o CONFIRMADO. Estado actual: {pedido.estado_codigo}"
+        )
+        
+    return transicionar_estado(uow, pedido_id, 'CANCELADO', usuario_id, motivo='Cancelado por el cliente')
