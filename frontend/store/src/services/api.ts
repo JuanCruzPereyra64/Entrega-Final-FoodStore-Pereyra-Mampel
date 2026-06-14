@@ -3,7 +3,14 @@ import { useAuthStore } from '../store/useAuthStore'
 
 export const apiClient = axios.create({
   baseURL: 'http://localhost:8000',
-  withCredentials: true,
+})
+
+apiClient.interceptors.request.use((config) => {
+  const token = useAuthStore.getState().token
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`
+  }
+  return config
 })
 
 apiClient.interceptors.response.use(
@@ -79,7 +86,7 @@ export const productosApi = {
 
 export const authApi = {
   login: (data: import('../types').UsuarioLogin) =>
-    request<{message: string, rol: string[]}>('/usuarios/login', { method: 'POST', body: JSON.stringify(data) }),
+    request<{message: string, rol: string[], access_token: string}>('/usuarios/login', { method: 'POST', body: JSON.stringify(data) }),
   logout: () => request<{message: string}>('/usuarios/logout', { method: 'POST' }),
   me: () => request<import('../types').UsuarioRead>('/usuarios/me'),
   register: (data: import('../types').UsuarioCreate) =>

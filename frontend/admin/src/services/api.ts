@@ -10,7 +10,11 @@ apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
     const isLoginRoute = error.config?.url?.includes('/usuarios/login')
-    if (error.response?.status === 401 && !isLoginRoute) {
+    const isMeRoute = error.config?.url?.includes('/usuarios/me')
+    const status = error.response?.status
+    const detail = error.response?.data?.detail
+    const isTokenInvalid = status === 403 && detail === 'Token invalido'
+    if (!isLoginRoute && !isMeRoute && (status === 401 || isTokenInvalid)) {
       useAuthStore.getState().logout()
       window.location.href = '/login'
     }
@@ -80,7 +84,8 @@ export const productosApi = {
 export const authApi = {
   login: (data: import('../types').UsuarioLogin) =>
     request<{message: string, rol: string[]}>('/usuarios/login', { method: 'POST', body: JSON.stringify(data) }),
-  logout: () => request<{message: string}>('/usuarios/logout', { method: 'POST' })
+  logout: () => request<{message: string}>('/usuarios/logout', { method: 'POST' }),
+  me: () => request<{id: number, email: string, roles: {nombre: string}[]}>('/usuarios/me'),
 }
 
 export const pedidosApi = {

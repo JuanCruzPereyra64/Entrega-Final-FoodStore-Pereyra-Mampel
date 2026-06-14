@@ -36,7 +36,7 @@ def crear_pedido(uow: UnitOfWork, usuario_id: int, data: PedidoCreate) -> Pedido
         detalle.producto = producto
         detalles_models.append(detalle)
         
-        # Validar y descontar stock de ingredientes
+        # Validar stock disponible (sin descontar aún — se descuenta al confirmar)
         links_ing = uow.session.exec(select(ProductoIngrediente).where(ProductoIngrediente.producto_id == producto.id)).all()
         for link in links_ing:
             ing = uow.session.get(Ingrediente, link.ingrediente_id)
@@ -44,20 +44,9 @@ def crear_pedido(uow: UnitOfWork, usuario_id: int, data: PedidoCreate) -> Pedido
                 cantidad_a_consumir = link.cantidad_requerida * det_data.cantidad
                 if ing.stock_actual < cantidad_a_consumir:
                     raise HTTPException(
-                        status_code=400, 
+                        status_code=400,
                         detail=f"Stock insuficiente de '{ing.nombre}' para preparar '{producto.nombre}'. Requerido: {cantidad_a_consumir}, Disponible: {ing.stock_actual}"
                     )
-                ing.stock_actual -= cantidad_a_consumir
-                uow.session.add(ing)
-                
-                # Registrar el movimiento
-                movimiento_stock_service.registrar_movimiento(
-                    uow, 
-                    ingrediente_id=ing.id, 
-                    cantidad=-cantidad_a_consumir, 
-                    motivo=f"Venta (Preparación de {producto.nombre})", 
-                    usuario_id=usuario_id
-                )
         
     costo_envio = Decimal('500.00')  # Hardcoded. Podría provenir de config o logística.
     descuento = Decimal('0.00')
@@ -117,7 +106,52 @@ def transicionar_estado(uow: UnitOfWork, pedido_id: int, nuevo_estado_codigo: st
         
     estado_anterior = pedido.estado_codigo
     pedido.estado_codigo = nuevo_estado_codigo
-    
+
+    # Descuento de stock al confirmar
+    if nuevo_estado_codigo == 'CONFIRMADO':
+        for detalle in pedido.detalles:
+            links_ing = uow.session.exec(
+                select(ProductoIngrediente).where(ProductoIngrediente.producto_id == detalle.producto_id)
+            ).all()
+            for link in links_ing:
+                ing = uow.session.get(Ingrediente, link.ingrediente_id)
+                if ing:
+                    cantidad_a_consumir = link.cantidad_requerida * detalle.cantidad
+                    if ing.stock_actual < cantidad_a_consumir:
+                        raise HTTPException(
+                            status_code=400,
+                            detail=f"Stock insuficiente de '{ing.nombre}'. Requerido: {cantidad_a_consumir}, Disponible: {ing.stock_actual}"
+                        )
+                    ing.stock_actual -= cantidad_a_consumir
+                    uow.session.add(ing)
+                    movimiento_stock_service.registrar_movimiento(
+                        uow,
+                        ingrediente_id=ing.id,
+                        cantidad=-cantidad_a_consumir,
+                        motivo=f"Venta confirmada (Pedido #{pedido.id})",
+                        usuario_id=usuario_id
+                    )
+
+    # Devolver stock si se cancela un pedido ya confirmado
+    if nuevo_estado_codigo == 'CANCELADO' and estado_anterior == 'CONFIRMADO':
+        for detalle in pedido.detalles:
+            links_ing = uow.session.exec(
+                select(ProductoIngrediente).where(ProductoIngrediente.producto_id == detalle.producto_id)
+            ).all()
+            for link in links_ing:
+                ing = uow.session.get(Ingrediente, link.ingrediente_id)
+                if ing:
+                    cantidad_a_devolver = link.cantidad_requerida * detalle.cantidad
+                    ing.stock_actual += cantidad_a_devolver
+                    uow.session.add(ing)
+                    movimiento_stock_service.registrar_movimiento(
+                        uow,
+                        ingrediente_id=ing.id,
+                        cantidad=cantidad_a_devolver,
+                        motivo=f"Cancelación de pedido confirmado (Pedido #{pedido.id})",
+                        usuario_id=usuario_id
+                    )
+
     # Historial Append-only
     historial = HistorialEstadoPedido(
         pedido_id=pedido.id,

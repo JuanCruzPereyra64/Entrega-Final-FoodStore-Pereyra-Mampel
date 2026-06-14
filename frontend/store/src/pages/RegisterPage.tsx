@@ -28,7 +28,7 @@ export function RegisterPage() {
         celular: form.celular || undefined,
       })
       const res = await authApi.login({ email: form.email, password: form.password })
-      setAuth(true, res.rol)
+      setAuth(true, res.rol, res.access_token)
       navigate('/')
     } catch (err: any) {
       setError(err.message || 'Error al registrarse')

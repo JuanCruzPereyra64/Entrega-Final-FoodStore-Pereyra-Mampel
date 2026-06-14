@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { MainLayout } from './components/layout/MainLayout'
 import { HomePage } from './pages/HomePage'
@@ -10,8 +11,15 @@ import { LoginPage } from './pages/LoginPage'
 import { GestorPedidosPage } from './pages/GestorPedidosPage'
 import { StockPage } from './pages/StockPage'
 import { VentasPage } from './pages/VentasPage'
+import { useAuthStore } from './store/useAuthStore'
 
 function App() {
+  const initAuth = useAuthStore(s => s.initAuth)
+
+  useEffect(() => {
+    initAuth()
+  }, [])
+
   return (
     <BrowserRouter>
       <Routes>

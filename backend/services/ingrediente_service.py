@@ -37,8 +37,9 @@ def create(uow: UnitOfWork, data: IngredienteCreate, usuario_id: int = None) -> 
 def update(uow: UnitOfWork, ingrediente_id: int, data: IngredienteUpdate, usuario_id: int = None) -> Ingrediente:
     ingrediente = get_by_id(uow, ingrediente_id)
     
-    if data.stock_actual is not None and data.stock_actual != ingrediente.stock_actual:
-        diferencia = data.stock_actual - ingrediente.stock_actual
+    stock_actual_db = float(ingrediente.stock_actual)
+    if data.stock_actual is not None and data.stock_actual != stock_actual_db:
+        diferencia = data.stock_actual - stock_actual_db
         movimiento_stock_service.registrar_movimiento(
             uow, 
             ingrediente_id=ingrediente.id, 

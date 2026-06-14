@@ -18,7 +18,7 @@ export function LoginPage() {
     setLoading(true)
     try {
       const res = await authApi.login({ email, password })
-      setAuth(true, res.rol)
+      setAuth(true, res.rol, res.access_token)
       navigate('/')
     } catch (err: any) {
       setError(err.message || 'Error al iniciar sesión')

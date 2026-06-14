@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, status, Response
 from backend.database import get_uow
-from backend.schemas.usuario import UsuarioCreate, UsuarioRead, UsuarioLogin, UsuarioUpdate
+from backend.schemas.usuario import UsuarioCreate, UsuarioRead, UsuarioReadWithRoles, UsuarioLogin, UsuarioUpdate
 from backend.core.security import create_access_token
 from backend.services import usuario_service
 from backend.uow.unit_of_work import UnitOfWork
@@ -27,14 +27,14 @@ def login(data: UsuarioLogin, response: Response, uow: UnitOfWork = Depends(get_
             max_age=1800,
             samesite="lax"
         )
-        return {"message": "Login exitoso", "rol": [r.nombre for r in usuario.roles]}
+        return {"message": "Login exitoso", "rol": [r.nombre for r in usuario.roles], "access_token": access_token}
 
 @router.post("/logout")
 def logout(response: Response):
     response.delete_cookie("access_token")
     return {"message": "Deslogueado"}
 
-@router.get("/me", response_model=UsuarioRead)
+@router.get("/me", response_model=UsuarioReadWithRoles)
 def get_me(current_user: Usuario = Depends(get_current_user)):
     return current_user
 

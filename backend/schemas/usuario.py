@@ -21,10 +21,18 @@ class UsuarioUpdate(SQLModel):
     celular: Optional[str] = None
 
 
+class RolRead(SQLModel):
+    nombre: str
+
+
 class UsuarioRead(UsuarioBase):
     id: int
     created_at: datetime
     updated_at: datetime
+
+
+class UsuarioReadWithRoles(UsuarioRead):
+    roles: list[RolRead] = []
 
 
 class UsuarioLogin(SQLModel):

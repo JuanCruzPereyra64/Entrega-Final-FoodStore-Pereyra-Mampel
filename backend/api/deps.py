@@ -7,17 +7,20 @@ from backend.schemas.token import TokenPayload
 from backend.database import get_uow
 from backend.uow.unit_of_work import UnitOfWork
 
-def get_token_from_cookie(request: Request) -> str:
+def get_token_from_request(request: Request) -> str:
+    auth_header = request.headers.get("Authorization")
+    if auth_header and auth_header.startswith("Bearer "):
+        return auth_header.split(" ", 1)[1]
     token = request.cookies.get("access_token")
-    if not token:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Falta loguearse",
-        )
-    return token
+    if token:
+        return token
+    raise HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Falta loguearse",
+    )
 
 def get_current_user(
-    token: str = Depends(get_token_from_cookie), 
+    token: str = Depends(get_token_from_request),
     uow: UnitOfWork = Depends(get_uow)
 ) -> Usuario:
     try:
@@ -28,17 +31,16 @@ def get_current_user(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Token invalido",
         )
-        
+
     with uow:
         user = uow.usuarios.get_by_id(int(token_data.sub))
         if not user:
             raise HTTPException(status_code=404, detail="Usuario no encontrado")
         if user.deleted_at is not None:
             raise HTTPException(status_code=400, detail="Usuario borrado")
-        
-        # Eager load the roles while the session is open
+
         _ = user.roles
-            
+
         return user
 
 def check_role(required_roles: list[str]):

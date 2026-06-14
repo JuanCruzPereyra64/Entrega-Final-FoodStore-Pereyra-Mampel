@@ -8,8 +8,12 @@ interface Props {
 }
 
 export const AuthGuard = ({ children, allowedRoles }: Props) => {
-  const { isAuthenticated, roles } = useAuthStore()
+  const { isAuthenticated, roles, loading } = useAuthStore()
   const location = useLocation()
+
+  if (loading) {
+    return <div className="min-h-screen flex items-center justify-center text-slate-400">Cargando...</div>
+  }
 
   if (!isAuthenticated) {
     return <Navigate to="/login" state={{ from: location }} replace />
