@@ -18,7 +18,10 @@ export function LoginPage() {
     setLoading(true)
     try {
       const res = await authApi.login({ email, password })
-      setAuth(true, res.rol)
+      setAuth(true, [], res.access_token)
+      const user = await authApi.me()
+      const roles = user.roles.map(r => r.nombre)
+      setAuth(true, roles, res.access_token)
       navigate('/')
     } catch (err: any) {
       setError(err.message || 'Error al iniciar sesión')
@@ -59,7 +62,7 @@ export function LoginPage() {
           <div className="pt-4 flex justify-center border-t border-slate-100 dark:border-slate-800">
             <button
               type="button"
-              onClick={() => { setEmail('admin@admin.com'); setPassword('admin'); }}
+              onClick={() => { setEmail('admin@foodstore.com'); setPassword('Admin1234!'); }}
               className="text-xs font-semibold text-slate-400 hover:text-primary transition-colors"
             >
               Autocompletar Admin (Demo)

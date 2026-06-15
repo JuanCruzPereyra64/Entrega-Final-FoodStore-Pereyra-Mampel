@@ -118,7 +118,7 @@ export function ProductoDetallePage() {
                     >
                       <div>
                         <p className="text-sm font-semibold text-slate-900 dark:text-slate-200">{ing.nombre}</p>
-                        <p className="text-[10px] text-slate-400 uppercase font-bold tracking-tighter">{ing.unidad_medida}</p>
+                        <p className="text-[10px] text-slate-400 uppercase font-bold tracking-tighter">{ing.unidad_medida?.nombre}</p>
                       </div>
                       <button
                         onClick={() => removeMutation.mutate({ productoId, ingredienteId: ing.id })}
@@ -152,7 +152,7 @@ export function ProductoDetallePage() {
                   >
                     <option value={0} disabled>Seleccionar...</option>
                     {ingredientesDisponibles.map((i) => (
-                      <option key={i.id} value={i.id}>{i.nombre} ({i.unidad_medida})</option>
+                      <option key={i.id} value={i.id}>{i.nombre} ({i.unidad_medida?.nombre})</option>
                     ))}
                   </select>
                   <Button

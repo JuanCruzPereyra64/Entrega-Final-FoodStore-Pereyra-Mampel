@@ -4,8 +4,9 @@ import { authApi } from '../services/api'
 interface AuthState {
   isAuthenticated: boolean
   roles: string[]
+  token: string | null
   loading: boolean
-  setAuth: (isAuthenticated: boolean, roles: string[]) => void
+  setAuth: (isAuthenticated: boolean, roles: string[], token?: string | null) => void
   logout: () => void
   initAuth: () => Promise<void>
 }
@@ -13,12 +14,13 @@ interface AuthState {
 export const useAuthStore = create<AuthState>(() => ({
   isAuthenticated: false,
   roles: [],
+  token: null,
   loading: true,
-  setAuth: (isAuthenticated, roles) => {
-    useAuthStore.setState({ isAuthenticated, roles, loading: false })
+  setAuth: (isAuthenticated, roles, token = null) => {
+    useAuthStore.setState({ isAuthenticated, roles, token, loading: false })
   },
   logout: () => {
-    useAuthStore.setState({ isAuthenticated: false, roles: [] })
+    useAuthStore.setState({ isAuthenticated: false, roles: [], token: null })
   },
   initAuth: async () => {
     const ADMIN_ROLES = ['ADMIN', 'STOCK', 'PEDIDOS']

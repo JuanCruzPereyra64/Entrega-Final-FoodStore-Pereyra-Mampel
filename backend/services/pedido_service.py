@@ -10,6 +10,14 @@ from backend.models.producto import ProductoIngrediente
 from backend.models.ingrediente import Ingrediente
 from backend.services import movimiento_stock_service
 
+FSM_TRANSICIONES = {
+    "PENDIENTE": {"CONFIRMADO", "CANCELADO"},
+    "CONFIRMADO": {"EN_PREP", "CANCELADO"},
+    "EN_PREP": {"ENTREGADO", "CANCELADO"},
+    "ENTREGADO": set(),
+    "CANCELADO": set(),
+}
+
 def crear_pedido(uow: UnitOfWork, usuario_id: int, data: PedidoCreate) -> Pedido:
     subtotal = Decimal('0.00')
     detalles_models = []
@@ -41,14 +49,14 @@ def crear_pedido(uow: UnitOfWork, usuario_id: int, data: PedidoCreate) -> Pedido
         for link in links_ing:
             ing = uow.session.get(Ingrediente, link.ingrediente_id)
             if ing:
-                cantidad_a_consumir = link.cantidad_requerida * det_data.cantidad
-                if ing.stock_actual < cantidad_a_consumir:
+                cantidad_a_consumir = link.cantidad * det_data.cantidad
+                if ing.stock_cantidad < int(cantidad_a_consumir):
                     raise HTTPException(
                         status_code=400,
-                        detail=f"Stock insuficiente de '{ing.nombre}' para preparar '{producto.nombre}'. Requerido: {cantidad_a_consumir}, Disponible: {ing.stock_actual}"
+                        detail=f"Stock insuficiente de '{ing.nombre}' para preparar '{producto.nombre}'. Requerido: {int(cantidad_a_consumir)}, Disponible: {ing.stock_cantidad}"
                     )
         
-    costo_envio = Decimal('500.00')  # Hardcoded. Podría provenir de config o logística.
+    costo_envio = Decimal('50.00')  # Hardcoded. Podría provenir de config o logística.
     descuento = Decimal('0.00')
     total = subtotal + costo_envio - descuento
     
@@ -89,7 +97,18 @@ def transicionar_estado(uow: UnitOfWork, pedido_id: int, nuevo_estado_codigo: st
     if not pedido:
         raise HTTPException(status_code=404, detail="Pedido no encontrado")
         
-    # Validar REGLA DE NEGOCIO ESTRICTA (Terminal)
+    # Validar FSM estricto (Tabla 10)
+    estado_actual_codigo = pedido.estado_codigo
+    if estado_actual_codigo not in FSM_TRANSICIONES:
+        raise HTTPException(status_code=500, detail="Estado actual del pedido es inválido")
+    
+    transiciones_validas = FSM_TRANSICIONES[estado_actual_codigo]
+    if nuevo_estado_codigo not in transiciones_validas:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"No se puede avanzar de '{estado_actual_codigo}' a '{nuevo_estado_codigo}'. Transiciones válidas: {', '.join(sorted(transiciones_validas))}"
+        )
+        
     estado_actual = uow.estados_pedido.get_by_codigo(pedido.estado_codigo)
     if not estado_actual:
         raise HTTPException(status_code=500, detail="Estado actual del pedido es inválido")
@@ -116,18 +135,18 @@ def transicionar_estado(uow: UnitOfWork, pedido_id: int, nuevo_estado_codigo: st
             for link in links_ing:
                 ing = uow.session.get(Ingrediente, link.ingrediente_id)
                 if ing:
-                    cantidad_a_consumir = link.cantidad_requerida * detalle.cantidad
-                    if ing.stock_actual < cantidad_a_consumir:
+                    cantidad_a_consumir = link.cantidad * detalle.cantidad
+                    if ing.stock_cantidad < int(cantidad_a_consumir):
                         raise HTTPException(
                             status_code=400,
-                            detail=f"Stock insuficiente de '{ing.nombre}'. Requerido: {cantidad_a_consumir}, Disponible: {ing.stock_actual}"
+                            detail=f"Stock insuficiente de '{ing.nombre}'. Requerido: {int(cantidad_a_consumir)}, Disponible: {ing.stock_cantidad}"
                         )
-                    ing.stock_actual -= cantidad_a_consumir
+                    ing.stock_cantidad -= int(cantidad_a_consumir)
                     uow.session.add(ing)
                     movimiento_stock_service.registrar_movimiento(
                         uow,
                         ingrediente_id=ing.id,
-                        cantidad=-cantidad_a_consumir,
+                        cantidad=-int(cantidad_a_consumir),
                         motivo=f"Venta confirmada (Pedido #{pedido.id})",
                         usuario_id=usuario_id
                     )
@@ -141,13 +160,13 @@ def transicionar_estado(uow: UnitOfWork, pedido_id: int, nuevo_estado_codigo: st
             for link in links_ing:
                 ing = uow.session.get(Ingrediente, link.ingrediente_id)
                 if ing:
-                    cantidad_a_devolver = link.cantidad_requerida * detalle.cantidad
-                    ing.stock_actual += cantidad_a_devolver
+                    cantidad_a_devolver = link.cantidad * detalle.cantidad
+                    ing.stock_cantidad += int(cantidad_a_devolver)
                     uow.session.add(ing)
                     movimiento_stock_service.registrar_movimiento(
                         uow,
                         ingrediente_id=ing.id,
-                        cantidad=cantidad_a_devolver,
+                        cantidad=int(cantidad_a_devolver),
                         motivo=f"Cancelación de pedido confirmado (Pedido #{pedido.id})",
                         usuario_id=usuario_id
                     )
@@ -165,6 +184,12 @@ def transicionar_estado(uow: UnitOfWork, pedido_id: int, nuevo_estado_codigo: st
     uow.session.flush()
     uow.session.refresh(pedido)
     
+    return pedido
+
+def get_by_id(uow: UnitOfWork, pedido_id: int) -> Pedido:
+    pedido = uow.pedidos.get_by_id(pedido_id)
+    if not pedido:
+        raise HTTPException(status_code=404, detail="Pedido no encontrado")
     return pedido
 
 def get_all(uow: UnitOfWork):

@@ -101,7 +101,7 @@ export interface ProductoCreate {
 
 export interface MovimientoStock {
   id: number
-  ingrediente_id: int
+  ingrediente_id: number
   cantidad: number
   tipo: string
   motivo: string
@@ -109,4 +109,35 @@ export interface MovimientoStock {
   created_at: string
   ingrediente_nombre?: string
   usuario_nombre?: string
+}
+
+export interface ResumenResponse {
+  ventas_hoy: number
+  ticket_promedio: number
+  pedidos_activos: number
+  total_mes_actual: number
+}
+
+export interface VentasPeriodoItem {
+  periodo: string
+  total_ventas: number
+  cantidad_pedidos: number
+}
+
+export interface ProductoTopItem {
+  producto_id: number
+  nombre: string
+  cantidad_vendida: number
+  ingresos: number
+}
+
+export interface PedidosEstadoItem {
+  estado_codigo: string
+  cantidad: number
+}
+
+export interface IngresosResponse {
+  forma_pago_codigo: string
+  total: number
+  cantidad: number
 }

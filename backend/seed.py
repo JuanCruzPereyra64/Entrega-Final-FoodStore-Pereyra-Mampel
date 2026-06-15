@@ -36,9 +36,8 @@ def run_seed():
             ("PENDIENTE", "Pedido recibido", 1, False),
             ("CONFIRMADO", "Pedido confirmado", 2, False),
             ("EN_PREP", "En preparación", 3, False),
-            ("EN_CAMINO", "En camino", 4, False),
-            ("ENTREGADO", "Entregado", 5, True),
-            ("CANCELADO", "Cancelado", 6, True)
+            ("ENTREGADO", "Entregado", 4, True),
+            ("CANCELADO", "Cancelado", 5, True)
         ]
         for codigo, desc, orden, terminal in estados:
             if not uow.estados_pedido.get_by_codigo(codigo):
@@ -47,7 +46,7 @@ def run_seed():
                 ))
                 
         print("Poblando Formas de Pago...")
-        formas_pago = ["EFECTIVO", "MERCADOPAGO", "TARJETA_CREDITO", "TARJETA_DEBITO"]
+        formas_pago = ["MERCADOPAGO", "EFECTIVO", "TRANSFERENCIA"]
         for codigo in formas_pago:
             if not uow.session.exec(select(FormaPago).where(FormaPago.codigo == codigo)).first():
                 uow.session.add(FormaPago(codigo=codigo, descripcion=f"Pago mediante {codigo}"))
@@ -56,10 +55,10 @@ def run_seed():
         
         print("Creando Usuarios...")
         usuarios_seed = [
-            ("test@test.com", "Test", "User", "123456", "CLIENT"),
-            ("admin@admin.com", "Admin", "Gómez", "admin", "ADMIN"),
-            ("cajero@food.com", "Carlos", "Cajero", "123456", "PEDIDOS"),
-            ("stock@food.com", "Sofía", "Stock", "123456", "STOCK"),
+            ("test@test.com", "Test", "User", "Test12345!", "CLIENT"),
+            ("admin@foodstore.com", "Admin", "Gómez", "Admin1234!", "ADMIN"),
+            ("cajero@food.com", "Carlos", "Cajero", "Cajero123!", "PEDIDOS"),
+            ("stock@food.com", "Sofía", "Stock", "Stock12345!", "STOCK"),
         ]
         
         for email, nombre, apellido, pwd, rol_codigo in usuarios_seed:
@@ -91,23 +90,26 @@ def run_seed():
             categorias_obj[c_nombre] = cat
 
         print("Creando Unidades de Medida...")
-        unidades_data = ["g", "ml", "u", "kg"]
+        unidades_data = [
+            ("g", "g", "peso"), ("ml", "ml", "volumen"), ("ud", "ud", "contable"),
+            ("kg", "kg", "peso"), ("L", "L", "volumen"), ("porciones", "porc", "contable"),
+        ]
         unidades_obj = {}
-        for u_nombre in unidades_data:
+        for u_nombre, u_simbolo, u_tipo in unidades_data:
             um = uow.session.exec(select(UnidadMedida).where(UnidadMedida.nombre == u_nombre)).first()
             if not um:
-                um = UnidadMedida(nombre=u_nombre)
+                um = UnidadMedida(nombre=u_nombre, simbolo=u_simbolo, tipo=u_tipo)
                 uow.session.add(um)
                 uow.session.flush()
             unidades_obj[u_nombre] = um
 
         print("Creando Ingredientes...")
         ingredientes_data = [
-            ("Pan de Papa", False, "u"), ("Medallón 120g", False, "g"), ("Queso Cheddar", False, "g"),
+            ("Pan de Papa", False, "ud"), ("Medallón 120g", False, "g"), ("Queso Cheddar", False, "g"),
             ("Panceta Crocante", False, "g"), ("Salsa BBQ", False, "ml"), ("Cebolla Caramelizada", False, "g"),
             ("Masa Madre", False, "g"), ("Salsa de Tomate", False, "ml"), ("Muzzarella", False, "g"),
             ("Pepperoni", False, "g"), ("Papas Bastón", False, "g"), ("Helado de Vainilla", False, "g"),
-            ("Brownie", True, "u"), ("Tomate Fresco", False, "u"), ("Lechuga", False, "g")
+            ("Brownie", True, "ud"), ("Tomate Fresco", False, "ud"), ("Lechuga", False, "g")
         ]
         ingredientes_obj = {}
         for i_nombre, alergeno, unidad in ingredientes_data:
@@ -199,7 +201,7 @@ def run_seed():
                 # Asignar ingredientes
                 for ing_name in p_data["ingredientes"]:
                     ing = ingredientes_obj[ing_name]
-                    uow.session.add(ProductoIngrediente(producto_id=prod.id, ingrediente_id=ing.id, es_removible=True, es_opcional=False))
+                    uow.session.add(ProductoIngrediente(producto_id=prod.id, ingrediente_id=ing.id, unidad_medida_id=ing.unidad_medida_id, es_removible=True, es_opcional=False))
                     
         print("Seed Súper Completo finalizado con éxito. Base de datos lista.")
 

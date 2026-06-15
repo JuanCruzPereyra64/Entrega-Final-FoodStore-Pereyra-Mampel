@@ -10,6 +10,7 @@ if TYPE_CHECKING:
     from backend.models.estado_pedido import EstadoPedido
     from backend.models.detalle_pedido import DetallePedido
     from backend.models.historial_estado_pedido import HistorialEstadoPedido
+    from backend.models.pago import Pago
 
 
 class Pedido(SQLModel, table=True):
@@ -64,3 +65,4 @@ class Pedido(SQLModel, table=True):
     historial: list["HistorialEstadoPedido"] = Relationship(
         back_populates="pedido", sa_relationship_kwargs={"cascade": "all, delete-orphan"}
     )
+    pago: Optional["Pago"] = Relationship(back_populates="pedido")

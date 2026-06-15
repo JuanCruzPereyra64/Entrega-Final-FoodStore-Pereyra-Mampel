@@ -7,7 +7,7 @@ from backend.uow.unit_of_work import UnitOfWork
 from backend.models.usuario import Usuario
 from backend.api.deps import check_role
 
-router = APIRouter(prefix="/ingredientes", tags=["Ingredientes"])
+router = APIRouter(prefix="/api/v1/ingredientes", tags=["Ingredientes"])
 
 @router.get("/", response_model=list[IngredienteRead])
 def get_ingredientes(
@@ -28,7 +28,7 @@ def get_ingrediente(ingrediente_id: int, uow: UnitOfWork = Depends(get_uow)):
 @router.post("/", response_model=IngredienteRead, status_code=201)
 def create_ingrediente(
     data: IngredienteCreate, 
-    current_user: Usuario = Depends(check_role(["ADMIN", "STOCK"])),
+    current_user: Usuario = Depends(check_role(["ADMIN"])),
     uow: UnitOfWork = Depends(get_uow)
 ):
     with uow:
@@ -39,7 +39,7 @@ def create_ingrediente(
 def update_ingrediente(
     ingrediente_id: int, 
     data: IngredienteUpdate, 
-    current_user: Usuario = Depends(check_role(["ADMIN", "STOCK"])),
+    current_user: Usuario = Depends(check_role(["ADMIN"])),
     uow: UnitOfWork = Depends(get_uow)
 ):
     with uow:
@@ -49,7 +49,7 @@ def update_ingrediente(
 @router.delete("/{ingrediente_id}", status_code=204)
 def delete_ingrediente(
     ingrediente_id: int, 
-    current_user: Usuario = Depends(check_role(["ADMIN", "STOCK"])),
+    current_user: Usuario = Depends(check_role(["ADMIN"])),
     uow: UnitOfWork = Depends(get_uow)
 ):
     with uow:

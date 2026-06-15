@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { pedidosApi } from '../services/api'
 import { Card } from '../components/common/Card'
+import { Skeleton } from '../components/common/Skeleton'
 import { TrendingUp, DollarSign, Clock, LayoutDashboard, Filter } from 'lucide-react'
 import { formatCurrency } from '../utils/format'
 
@@ -26,7 +27,7 @@ export function VentasPage() {
       if (p.estado_codigo === 'ENTREGADO') {
         liquidos += totalNum
         cantEntregados++
-      } else if (['EN_CAMINO', 'EN_PREP', 'CONFIRMADO'].includes(p.estado_codigo)) {
+      } else if (['EN_PREP', 'CONFIRMADO'].includes(p.estado_codigo)) {
         aLiquidar += totalNum
       }
     })
@@ -41,11 +42,11 @@ export function VentasPage() {
     // Por defecto mostramos todo lo que no sea CANCELADO ni PENDIENTE, a menos que se filtre
     let list = pedidos
     if (filtroEstado === 'A_LIQUIDAR') {
-      list = pedidos.filter(p => ['EN_CAMINO', 'EN_PREP', 'CONFIRMADO'].includes(p.estado_codigo))
+      list = pedidos.filter(p => ['EN_PREP', 'CONFIRMADO'].includes(p.estado_codigo))
     } else if (filtroEstado) {
       list = pedidos.filter(p => p.estado_codigo === filtroEstado)
     } else {
-      list = pedidos.filter(p => ['ENTREGADO', 'EN_CAMINO', 'EN_PREP', 'CONFIRMADO'].includes(p.estado_codigo))
+      list = pedidos.filter(p => ['ENTREGADO', 'EN_PREP', 'CONFIRMADO'].includes(p.estado_codigo))
     }
     // Ordenar por fecha descendente
     return list.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
@@ -55,15 +56,29 @@ export function VentasPage() {
     PENDIENTE:  { label: 'Pendiente',       className: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400' },
     CONFIRMADO: { label: 'Confirmado',      className: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' },
     EN_PREP:    { label: 'En Preparación',  className: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400' },
-    EN_CAMINO:  { label: 'En Camino',       className: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400' },
     ENTREGADO:  { label: 'Entregado',       className: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' },
     CANCELADO:  { label: 'Cancelado',       className: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' },
   }
 
   if (isLoading) return (
-    <div className="flex flex-col items-center justify-center min-h-[400px] gap-4">
-      <div className="w-12 h-12 border-4 border-primary/20 border-t-primary rounded-full animate-spin" />
-      <p className="text-slate-500 font-medium italic">Calculando ingresos...</p>
+    <div className="space-y-8">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {Array.from({ length: 3 }).map((_, i) => (
+          <Card key={i} className="p-6"><Skeleton className="h-24 w-full" /></Card>
+        ))}
+      </div>
+      <Card noPadding className="overflow-hidden">
+        <div className="divide-y divide-slate-100 dark:divide-slate-800">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="flex items-center gap-6 px-6 py-4">
+              <Skeleton className="h-4 w-16" />
+              <Skeleton className="h-4 w-32" />
+              <Skeleton className="h-5 w-20 rounded-full" />
+              <Skeleton className="h-4 w-16 ml-auto" />
+            </div>
+          ))}
+        </div>
+      </Card>
     </div>
   )
 
@@ -99,7 +114,7 @@ export function VentasPage() {
         <Card className="bg-gradient-to-br from-indigo-500 to-indigo-700 text-white border-0">
           <div className="flex items-start justify-between">
             <div>
-              <p className="text-indigo-100 font-medium text-sm">A Liquidar (En Tránsito/Prep)</p>
+              <p className="text-indigo-100 font-medium text-sm">A Liquidar (En Preparación)</p>
               <h3 className="text-3xl font-bold mt-2 font-display">{formatCurrency(metricas.aLiquidar)}</h3>
             </div>
             <div className="p-3 bg-white/20 rounded-xl backdrop-blur-sm">
@@ -132,9 +147,9 @@ export function VentasPage() {
             onChange={(e) => setFiltroEstado(e.target.value)}
             className="w-full pl-11 pr-10 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-sm appearance-none focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all shadow-sm"
           >
-            <option value="">Ingresos (Entregados y en Tránsito)</option>
+            <option value="">Ingresos (Entregados y en Preparación)</option>
             <option value="ENTREGADO">Entregados (Cobrados)</option>
-            <option value="A_LIQUIDAR">A Liquidar (En Tránsito/Prep)</option>
+            <option value="A_LIQUIDAR">A Liquidar (En Preparación)</option>
           </select>
         </div>
       </div>

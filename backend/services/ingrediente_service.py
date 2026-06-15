@@ -21,11 +21,11 @@ def create(uow: UnitOfWork, data: IngredienteCreate, usuario_id: int = None) -> 
     uow.ingredientes.add(ingrediente)
     uow.session.flush()
     
-    if ingrediente.stock_actual > 0:
+    if ingrediente.stock_cantidad > 0:
         movimiento_stock_service.registrar_movimiento(
             uow, 
             ingrediente_id=ingrediente.id, 
-            cantidad=ingrediente.stock_actual, 
+            cantidad=float(ingrediente.stock_cantidad), 
             motivo="Stock inicial", 
             usuario_id=usuario_id
         )
@@ -37,13 +37,13 @@ def create(uow: UnitOfWork, data: IngredienteCreate, usuario_id: int = None) -> 
 def update(uow: UnitOfWork, ingrediente_id: int, data: IngredienteUpdate, usuario_id: int = None) -> Ingrediente:
     ingrediente = get_by_id(uow, ingrediente_id)
     
-    stock_actual_db = float(ingrediente.stock_actual)
-    if data.stock_actual is not None and data.stock_actual != stock_actual_db:
-        diferencia = data.stock_actual - stock_actual_db
+    stock_cantidad_db = int(ingrediente.stock_cantidad)
+    if data.stock_cantidad is not None and data.stock_cantidad != stock_cantidad_db:
+        diferencia = data.stock_cantidad - stock_cantidad_db
         movimiento_stock_service.registrar_movimiento(
             uow, 
             ingrediente_id=ingrediente.id, 
-            cantidad=diferencia, 
+            cantidad=float(diferencia), 
             motivo="Ajuste manual", 
             usuario_id=usuario_id
         )

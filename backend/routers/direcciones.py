@@ -6,7 +6,7 @@ from backend.uow.unit_of_work import UnitOfWork
 from backend.models.usuario import Usuario
 from backend.api.deps import get_current_user
 
-router = APIRouter(prefix="/direcciones", tags=["Direcciones"])
+router = APIRouter(prefix="/api/v1/direcciones", tags=["Direcciones"])
 
 @router.get("/", response_model=list[DireccionRead])
 def get_direcciones(

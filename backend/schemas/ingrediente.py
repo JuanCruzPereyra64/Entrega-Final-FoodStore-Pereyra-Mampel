@@ -7,16 +7,14 @@ class IngredienteCreate(SQLModel):
     nombre: str
     unidad_medida_id: int
     es_alergeno: bool = False
-    stock_actual: float = 0.0
-    stock_minimo: float = 0.0
+    stock_cantidad: int = 0
 
 
 class IngredienteUpdate(SQLModel):
     nombre: Optional[str] = None
     unidad_medida_id: Optional[int] = None
     es_alergeno: Optional[bool] = None
-    stock_actual: Optional[float] = None
-    stock_minimo: Optional[float] = None
+    stock_cantidad: Optional[int] = None
 
 
 class IngredienteRead(SQLModel):
@@ -24,6 +22,5 @@ class IngredienteRead(SQLModel):
     nombre: str
     unidad_medida_id: int
     es_alergeno: bool
-    stock_actual: float
-    stock_minimo: float
+    stock_cantidad: int
     unidad_medida: Optional[UnidadMedidaRead] = None

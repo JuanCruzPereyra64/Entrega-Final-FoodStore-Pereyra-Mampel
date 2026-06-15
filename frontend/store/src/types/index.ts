@@ -27,10 +27,10 @@ export interface Producto {
 export interface DetallePedido {
   id: number
   producto_id: number
-  nombre_producto: string
-  precio_unitario: number
+  nombre_producto_snap: string
+  precio_unitario_snap: number
   cantidad: number
-  subtotal: number
+  subtotal_snap: number
   producto?: Producto
 }
 
@@ -132,4 +132,28 @@ export interface ProductoCreate {
   stock_cantidad?: number
   disponible?: boolean
   imagenes_url?: string[]
+}
+
+export interface PagoCreate {
+  pedido_id: number
+  transaction_amount: number
+  card_token_id: string
+  email: string
+  payment_method_id?: string
+  installments?: number
+  description?: string
+}
+
+export interface PagoResponse {
+  id: number
+  pedido_id: number
+  mp_payment_id: number | null
+  mp_status: string
+  mp_status_detail: string | null
+  transaction_amount: number
+  payment_method_id: string | null
+  payer_email: string | null
+  installments: number | null
+  external_reference: string
+  created_at: string
 }

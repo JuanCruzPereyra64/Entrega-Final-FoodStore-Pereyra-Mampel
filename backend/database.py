@@ -1,18 +1,17 @@
 import os
 from typing import Generator
-from dotenv import load_dotenv
 from sqlmodel import SQLModel, Session, create_engine
 
-load_dotenv(dotenv_path=os.path.join(os.path.dirname(__file__), ".env"))
+from backend.core.config import settings
 
-DATABASE_URL = os.getenv("DATABASE_URL")
-if DATABASE_URL.startswith("sqlite:///./"):
-    db_name = DATABASE_URL.split("sqlite:///./")[1]
+database_url = settings.database_url
+if database_url.startswith("sqlite:///./"):
+    db_name = database_url.split("sqlite:///./")[1]
     db_path = os.path.join(os.path.dirname(__file__), db_name)
-    DATABASE_URL = f"sqlite:///{db_path}"
+    database_url = f"sqlite:///{db_path}"
 
-connect_args = {"check_same_thread": False} if DATABASE_URL.startswith("sqlite") else {}
-engine = create_engine(DATABASE_URL, connect_args=connect_args)
+connect_args = {"check_same_thread": False} if database_url.startswith("sqlite") else {}
+engine = create_engine(database_url, connect_args=connect_args)
 
 
 def create_db_and_tables():

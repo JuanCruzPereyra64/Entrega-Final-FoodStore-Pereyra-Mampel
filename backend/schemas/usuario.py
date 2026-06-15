@@ -1,18 +1,18 @@
 from datetime import datetime
 from typing import Optional
-from sqlmodel import SQLModel
+from sqlmodel import SQLModel, Field
 from pydantic import EmailStr
 
 
 class UsuarioBase(SQLModel):
-    nombre: str
-    apellido: str
+    nombre: str = Field(min_length=2, max_length=80)
+    apellido: str = Field(min_length=2, max_length=80)
     email: EmailStr
     celular: Optional[str] = None
 
 
 class UsuarioCreate(UsuarioBase):
-    password: str
+    password: str = Field(min_length=8)
 
 
 class UsuarioUpdate(SQLModel):
@@ -37,4 +37,4 @@ class UsuarioReadWithRoles(UsuarioRead):
 
 class UsuarioLogin(SQLModel):
     email: EmailStr
-    password: str
+    password: str = Field(min_length=8)

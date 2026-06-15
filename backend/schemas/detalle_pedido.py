@@ -1,6 +1,6 @@
 from decimal import Decimal
 from datetime import datetime
-from typing import Optional, Any
+from typing import Optional
 from sqlmodel import SQLModel
 from backend.schemas.producto import ProductoReadBasico
 
@@ -8,7 +8,7 @@ from backend.schemas.producto import ProductoReadBasico
 class DetallePedidoBase(SQLModel):
     producto_id: int
     cantidad: int
-    personalizacion: Optional[dict[str, Any]] = None
+    personalizacion: Optional[list[int]] = None
 
 
 class DetallePedidoCreate(DetallePedidoBase):

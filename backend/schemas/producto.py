@@ -5,8 +5,14 @@ from backend.schemas.ingrediente import IngredienteRead
 
 class ProductoIngredienteCreate(SQLModel):
     id: int
-    cantidad_requerida: float = 1.0
+    cantidad: float = 1.0
+    unidad_medida_id: Optional[int] = None
 
+
+class AddIngredienteRequest(SQLModel):
+    ingrediente_id: int
+    cantidad: float = 1.0
+    unidad_medida_id: int
 
 
 class ProductoCreate(SQLModel):
@@ -18,6 +24,7 @@ class ProductoCreate(SQLModel):
     stock_cantidad: int = 0
     disponible: bool = True
     imagenes_url: list[str] = Field(default=[])
+    unidad_venta_id: Optional[int] = None
 
 
 class ProductoUpdate(SQLModel):
@@ -29,6 +36,7 @@ class ProductoUpdate(SQLModel):
     stock_cantidad: Optional[int] = None
     disponible: Optional[bool] = None
     imagenes_url: Optional[list[str]] = None
+    unidad_venta_id: Optional[int] = None
 
 
 class ProductoReadBasico(SQLModel):
@@ -39,6 +47,13 @@ class ProductoReadBasico(SQLModel):
     imagenes_url: list[str] = []
 
 
+class ProductoIngredienteRead(SQLModel):
+    producto_id: int
+    ingrediente_id: int
+    cantidad: float
+    unidad_medida_id: int
+
+
 class ProductoRead(SQLModel):
     id: int
     nombre: str
@@ -47,5 +62,6 @@ class ProductoRead(SQLModel):
     stock_cantidad: int
     disponible: bool
     imagenes_url: list[str] = []
+    unidad_venta_id: Optional[int] = None
     categorias: list[CategoriaRead] = []
     ingredientes: list[IngredienteRead] = []

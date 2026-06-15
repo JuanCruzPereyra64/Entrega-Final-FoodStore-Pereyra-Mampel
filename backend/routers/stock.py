@@ -7,7 +7,7 @@ from backend.uow.unit_of_work import UnitOfWork
 from backend.models.usuario import Usuario
 from backend.api.deps import check_role
 
-router = APIRouter(prefix="/stock", tags=["Stock"])
+router = APIRouter(prefix="/api/v1/stock", tags=["Stock"])
 
 @router.get("/movimientos", response_model=list[MovimientoStockRead])
 def get_movimientos(

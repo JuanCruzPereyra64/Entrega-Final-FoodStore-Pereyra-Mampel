@@ -9,7 +9,7 @@ from backend.models.rol import Rol
 from backend.api.deps import check_role
 from backend.schemas.usuario import UsuarioRead
 
-router = APIRouter(prefix="/admin", tags=["Admin"], dependencies=[Depends(check_role(["ADMIN"]))])
+router = APIRouter(prefix="/api/v1/admin", tags=["Admin"], dependencies=[Depends(check_role(["ADMIN"]))])
 
 @router.get("/usuarios", response_model=list[UsuarioRead])
 def get_usuarios(

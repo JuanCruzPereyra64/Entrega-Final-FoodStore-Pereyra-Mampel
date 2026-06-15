@@ -7,7 +7,7 @@ from backend.uow.unit_of_work import UnitOfWork
 from backend.models.usuario import Usuario
 from backend.api.deps import check_role
 
-router = APIRouter(prefix="/categorias", tags=["Categorías"])
+router = APIRouter(prefix="/api/v1/categorias", tags=["Categorías"])
 
 @router.get("/", response_model=list[CategoriaRead])
 def get_categorias(
@@ -26,7 +26,7 @@ def get_categoria(categoria_id: int, uow: UnitOfWork = Depends(get_uow)):
 @router.post("/", response_model=CategoriaRead, status_code=201)
 def create_categoria(
     data: CategoriaCreate, 
-    current_user: Usuario = Depends(check_role(["ADMIN", "STOCK"])),
+    current_user: Usuario = Depends(check_role(["ADMIN"])),
     uow: UnitOfWork = Depends(get_uow)
 ):
     with uow:
@@ -36,7 +36,7 @@ def create_categoria(
 def update_categoria(
     categoria_id: int, 
     data: CategoriaUpdate, 
-    current_user: Usuario = Depends(check_role(["ADMIN", "STOCK"])),
+    current_user: Usuario = Depends(check_role(["ADMIN"])),
     uow: UnitOfWork = Depends(get_uow)
 ):
     with uow:
@@ -45,7 +45,7 @@ def update_categoria(
 @router.delete("/{categoria_id}", status_code=204)
 def delete_categoria(
     categoria_id: int, 
-    current_user: Usuario = Depends(check_role(["ADMIN", "STOCK"])),
+    current_user: Usuario = Depends(check_role(["ADMIN"])),
     uow: UnitOfWork = Depends(get_uow)
 ):
     with uow:

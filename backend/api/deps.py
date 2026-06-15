@@ -1,7 +1,7 @@
 import jwt
 from fastapi import Depends, HTTPException, status, Request
 from pydantic import ValidationError
-from backend.core.security import ALGORITHM, SECRET_KEY
+from backend.core.config import settings
 from backend.models.usuario import Usuario
 from backend.schemas.token import TokenPayload
 from backend.database import get_uow
@@ -24,7 +24,7 @@ def get_current_user(
     uow: UnitOfWork = Depends(get_uow)
 ) -> Usuario:
     try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        payload = jwt.decode(token, settings.secret_key, algorithms=[settings.algorithm])
         token_data = TokenPayload(**payload)
     except (jwt.InvalidTokenError, ValidationError):
         raise HTTPException(

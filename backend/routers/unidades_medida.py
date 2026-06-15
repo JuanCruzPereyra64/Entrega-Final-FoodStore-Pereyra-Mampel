@@ -4,16 +4,18 @@ from backend.database import get_uow
 from backend.uow.unit_of_work import UnitOfWork
 from backend.schemas.unidad_medida import UnidadMedidaRead, UnidadMedidaCreate, UnidadMedidaUpdate
 from backend.models.unidad_medida import UnidadMedida
+from backend.models.usuario import Usuario
+from backend.api.deps import check_role
 
-router = APIRouter(prefix="/unidades-medida", tags=["unidades-medida"])
+router = APIRouter(prefix="/api/v1/unidades-medida", tags=["unidades-medida"])
 
 @router.get("/", response_model=List[UnidadMedidaRead])
-def get_unidades_medida(uow: UnitOfWork = Depends(get_uow)):
+def get_unidades_medida(current_user: Usuario = Depends(check_role(["ADMIN"])), uow: UnitOfWork = Depends(get_uow)):
     with uow:
         return uow.unidades_medida.get_all()
 
 @router.get("/{id}", response_model=UnidadMedidaRead)
-def get_unidad_medida(id: int, uow: UnitOfWork = Depends(get_uow)):
+def get_unidad_medida(id: int, current_user: Usuario = Depends(check_role(["ADMIN"])), uow: UnitOfWork = Depends(get_uow)):
     with uow:
         unidad = uow.unidades_medida.get_by_id(id)
         if not unidad:
@@ -21,7 +23,7 @@ def get_unidad_medida(id: int, uow: UnitOfWork = Depends(get_uow)):
         return unidad
 
 @router.post("/", response_model=UnidadMedidaRead)
-def create_unidad_medida(data: UnidadMedidaCreate, uow: UnitOfWork = Depends(get_uow)):
+def create_unidad_medida(data: UnidadMedidaCreate, current_user: Usuario = Depends(check_role(["ADMIN"])), uow: UnitOfWork = Depends(get_uow)):
     with uow:
         # Check duplicate
         existing = uow.session.query(UnidadMedida).filter(UnidadMedida.nombre == data.nombre).first()
@@ -34,7 +36,7 @@ def create_unidad_medida(data: UnidadMedidaCreate, uow: UnitOfWork = Depends(get
         return nueva
 
 @router.put("/{id}", response_model=UnidadMedidaRead)
-def update_unidad_medida(id: int, data: UnidadMedidaUpdate, uow: UnitOfWork = Depends(get_uow)):
+def update_unidad_medida(id: int, data: UnidadMedidaUpdate, current_user: Usuario = Depends(check_role(["ADMIN"])), uow: UnitOfWork = Depends(get_uow)):
     with uow:
         unidad = uow.unidades_medida.get_by_id(id)
         if not unidad:
@@ -46,7 +48,7 @@ def update_unidad_medida(id: int, data: UnidadMedidaUpdate, uow: UnitOfWork = De
         return unidad
 
 @router.delete("/{id}")
-def delete_unidad_medida(id: int, uow: UnitOfWork = Depends(get_uow)):
+def delete_unidad_medida(id: int, current_user: Usuario = Depends(check_role(["ADMIN"])), uow: UnitOfWork = Depends(get_uow)):
     with uow:
         unidad = uow.unidades_medida.get_by_id(id)
         if not unidad:

@@ -1,24 +1,24 @@
 import { useState } from 'react'
+import { toast } from 'sonner'
 import { useCartStore } from '../store/useCartStore'
 import { pedidosApi, direccionesApi } from '../services/api'
 import type { Direccion } from '../types'
 import { Button } from '../components/common/Button'
 import { Card } from '../components/common/Card'
 import { Modal } from '../components/common/Modal'
+import { PaymentStep } from '../components/checkout/PaymentStep'
 import { Trash2, ShoppingBag, MapPin, CreditCard } from 'lucide-react'
 import { useNavigate, Link } from 'react-router-dom'
 
 const FORMAS_PAGO = [
-  { codigo: 'EFECTIVO', label: 'Efectivo' },
   { codigo: 'MERCADOPAGO', label: 'MercadoPago' },
-  { codigo: 'TARJETA_CREDITO', label: 'Tarjeta de Crédito' },
-  { codigo: 'TARJETA_DEBITO', label: 'Tarjeta de Débito' },
+  { codigo: 'EFECTIVO', label: 'Efectivo' },
+  { codigo: 'TRANSFERENCIA', label: 'Transferencia' },
 ]
 
 export function CartPage() {
   const { items, clearCart, removeItem, updateQuantity, getTotal } = useCartStore()
   const [loading, setLoading] = useState(false)
-  const [error, setError] = useState('')
   const navigate = useNavigate()
 
   const [checkoutOpen, setCheckoutOpen] = useState(false)
@@ -26,10 +26,11 @@ export function CartPage() {
   const [loadingAddresses, setLoadingAddresses] = useState(false)
   const [selectedAddressId, setSelectedAddressId] = useState<number | null>(null)
   const [formaPago, setFormaPago] = useState('EFECTIVO')
+  const [paymentPedido, setPaymentPedido] = useState<{ id: number; total: number } | null>(null)
 
   async function openCheckout() {
     setCheckoutOpen(true)
-    setError('')
+    setPaymentPedido(null)
     setLoadingAddresses(true)
     try {
       const dirs = await direccionesApi.getAll()
@@ -37,7 +38,6 @@ export function CartPage() {
       const principal = dirs.find(d => d.es_principal)
       setSelectedAddressId(principal?.id ?? dirs[0]?.id ?? null)
     } catch {
-      // silencioso — el modal igual se abre y el usuario puede continuar
     } finally {
       setLoadingAddresses(false)
     }
@@ -46,9 +46,8 @@ export function CartPage() {
   async function handleCheckout() {
     if (items.length === 0) return
     setLoading(true)
-    setError('')
     try {
-      await pedidosApi.create({
+      const pedido = await pedidosApi.create({
         detalles: items.map(item => ({
           producto_id: item.producto_id,
           cantidad: item.cantidad,
@@ -56,14 +55,27 @@ export function CartPage() {
         forma_pago_codigo: formaPago,
         direccion_id: selectedAddressId || undefined,
       })
+
+      if (formaPago === 'MERCADOPAGO') {
+        setPaymentPedido({ id: pedido.id, total: pedido.total })
+        return
+      }
+
       clearCart()
+      toast.success('Pedido creado exitosamente')
       navigate('/mis-pedidos')
     } catch (err: any) {
-      const msg = err.response?.data?.detail || err.message || 'Error desconocido'
-      setError(typeof msg === 'string' ? msg : JSON.stringify(msg))
+      toast.error(err.response?.data?.detail || err.message || 'Error al crear el pedido')
     } finally {
       setLoading(false)
     }
+  }
+
+  function handlePaymentSuccess() {
+    clearCart()
+    setCheckoutOpen(false)
+    setPaymentPedido(null)
+    navigate('/mis-pedidos')
   }
 
   if (items.length === 0) return (
@@ -121,118 +133,125 @@ export function CartPage() {
         <Button size="lg" onClick={openCheckout}>Realizar Pedido</Button>
       </div>
 
-      <Modal open={checkoutOpen} title="Finalizar pedido" onClose={() => setCheckoutOpen(false)}>
-        <div className="space-y-6">
+      <Modal open={checkoutOpen} title={paymentPedido ? 'Pagar con MercadoPago' : 'Finalizar pedido'} onClose={() => { setCheckoutOpen(false); setPaymentPedido(null) }}>
+        {paymentPedido ? (
+          <PaymentStep
+            pedidoId={paymentPedido.id}
+            total={paymentPedido.total}
+            onSuccess={handlePaymentSuccess}
+            onBack={() => setPaymentPedido(null)}
+          />
+        ) : (
+          <div className="space-y-6">
 
-          {/* Dirección */}
-          <div>
-            <div className="flex items-center gap-2 mb-3">
-              <MapPin size={18} className="text-primary" />
-              <h3 className="font-semibold text-slate-800 dark:text-white">Dirección de entrega</h3>
+            {/* Dirección */}
+            <div>
+              <div className="flex items-center gap-2 mb-3">
+                <MapPin size={18} className="text-primary" />
+                <h3 className="font-semibold text-slate-800 dark:text-white">Dirección de entrega</h3>
+              </div>
+              {loadingAddresses ? (
+                <div className="flex justify-center py-4">
+                  <div className="w-6 h-6 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+                </div>
+              ) : addresses.length === 0 ? (
+                <div className="p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl text-sm text-slate-500 text-center">
+                  No tenés direcciones guardadas.{' '}
+                  <Link
+                    to="/mi-perfil"
+                    onClick={() => setCheckoutOpen(false)}
+                    className="text-primary font-semibold hover:underline"
+                  >
+                    Agregar en mi perfil
+                  </Link>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {addresses.map(dir => (
+                    <label
+                      key={dir.id}
+                      className={`flex items-start gap-3 p-3 rounded-2xl cursor-pointer border-2 transition-colors ${
+                        selectedAddressId === dir.id
+                          ? 'border-primary bg-primary/5'
+                          : 'border-transparent bg-slate-50 dark:bg-slate-800/50'
+                      }`}
+                    >
+                      <input
+                        type="radio"
+                        name="address"
+                        checked={selectedAddressId === dir.id}
+                        onChange={() => setSelectedAddressId(dir.id)}
+                        className="mt-1 accent-primary"
+                      />
+                      <div>
+                        {dir.etiqueta && (
+                          <p className="text-xs font-bold text-primary mb-0.5">{dir.etiqueta}</p>
+                        )}
+                        <p className="text-sm font-medium">{dir.linea1}</p>
+                        {dir.linea2 && <p className="text-xs text-slate-400">{dir.linea2}</p>}
+                        <p className="text-xs text-slate-400">{dir.ciudad}</p>
+                      </div>
+                    </label>
+                  ))}
+                </div>
+              )}
             </div>
-            {loadingAddresses ? (
-              <div className="flex justify-center py-4">
-                <div className="w-6 h-6 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+
+            {/* Forma de pago */}
+            <div>
+              <div className="flex items-center gap-2 mb-3">
+                <CreditCard size={18} className="text-primary" />
+                <h3 className="font-semibold text-slate-800 dark:text-white">Forma de pago</h3>
               </div>
-            ) : addresses.length === 0 ? (
-              <div className="p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl text-sm text-slate-500 text-center">
-                No tenés direcciones guardadas.{' '}
-                <Link
-                  to="/mi-perfil"
-                  onClick={() => setCheckoutOpen(false)}
-                  className="text-primary font-semibold hover:underline"
-                >
-                  Agregar en mi perfil
-                </Link>
-              </div>
-            ) : (
-              <div className="space-y-2">
-                {addresses.map(dir => (
+              <div className="grid grid-cols-2 gap-2">
+                {FORMAS_PAGO.map(fp => (
                   <label
-                    key={dir.id}
-                    className={`flex items-start gap-3 p-3 rounded-2xl cursor-pointer border-2 transition-colors ${
-                      selectedAddressId === dir.id
+                    key={fp.codigo}
+                    className={`flex items-center gap-2 p-3 rounded-2xl cursor-pointer border-2 transition-colors ${
+                      formaPago === fp.codigo
                         ? 'border-primary bg-primary/5'
                         : 'border-transparent bg-slate-50 dark:bg-slate-800/50'
                     }`}
                   >
                     <input
                       type="radio"
-                      name="address"
-                      checked={selectedAddressId === dir.id}
-                      onChange={() => setSelectedAddressId(dir.id)}
-                      className="mt-1 accent-primary"
+                      name="formaPago"
+                      checked={formaPago === fp.codigo}
+                      onChange={() => setFormaPago(fp.codigo)}
+                      className="accent-primary"
                     />
-                    <div>
-                      {dir.etiqueta && (
-                        <p className="text-xs font-bold text-primary mb-0.5">{dir.etiqueta}</p>
-                      )}
-                      <p className="text-sm font-medium">{dir.linea1}</p>
-                      {dir.linea2 && <p className="text-xs text-slate-400">{dir.linea2}</p>}
-                      <p className="text-xs text-slate-400">{dir.ciudad}</p>
-                    </div>
+                    <span className="text-sm font-medium">{fp.label}</span>
                   </label>
                 ))}
               </div>
-            )}
-          </div>
-
-          {/* Forma de pago */}
-          <div>
-            <div className="flex items-center gap-2 mb-3">
-              <CreditCard size={18} className="text-primary" />
-              <h3 className="font-semibold text-slate-800 dark:text-white">Forma de pago</h3>
             </div>
-            <div className="grid grid-cols-2 gap-2">
-              {FORMAS_PAGO.map(fp => (
-                <label
-                  key={fp.codigo}
-                  className={`flex items-center gap-2 p-3 rounded-2xl cursor-pointer border-2 transition-colors ${
-                    formaPago === fp.codigo
-                      ? 'border-primary bg-primary/5'
-                      : 'border-transparent bg-slate-50 dark:bg-slate-800/50'
-                  }`}
-                >
-                  <input
-                    type="radio"
-                    name="formaPago"
-                    checked={formaPago === fp.codigo}
-                    onChange={() => setFormaPago(fp.codigo)}
-                    className="accent-primary"
-                  />
-                  <span className="text-sm font-medium">{fp.label}</span>
-                </label>
-              ))}
+
+            {/* Resumen */}
+            <div className="bg-slate-50 dark:bg-slate-800/50 rounded-2xl p-4">
+              <div className="flex justify-between text-sm mb-1">
+                <span className="text-slate-500">Subtotal</span>
+                <span className="font-medium">${getTotal()}</span>
+              </div>
+              <div className="flex justify-between text-sm mb-3">
+                <span className="text-slate-500">Envío</span>
+                <span className="font-medium">$500</span>
+              </div>
+              <div className="flex justify-between font-bold text-base border-t border-slate-200 dark:border-slate-700 pt-3">
+                <span>Total</span>
+                <span className="text-primary">${getTotal() + 500}</span>
+              </div>
+            </div>
+
+            <div className="flex gap-3">
+              <Button variant="secondary" className="flex-1" onClick={() => setCheckoutOpen(false)}>
+                Cancelar
+              </Button>
+              <Button className="flex-1" onClick={handleCheckout} isLoading={loading}>
+                Confirmar pedido
+              </Button>
             </div>
           </div>
-
-          {/* Resumen */}
-          <div className="bg-slate-50 dark:bg-slate-800/50 rounded-2xl p-4">
-            <div className="flex justify-between text-sm mb-1">
-              <span className="text-slate-500">Subtotal</span>
-              <span className="font-medium">${getTotal()}</span>
-            </div>
-            <div className="flex justify-between text-sm mb-3">
-              <span className="text-slate-500">Envío</span>
-              <span className="font-medium">$500</span>
-            </div>
-            <div className="flex justify-between font-bold text-base border-t border-slate-200 dark:border-slate-700 pt-3">
-              <span>Total</span>
-              <span className="text-primary">${getTotal() + 500}</span>
-            </div>
-          </div>
-
-          {error && <p className="text-sm text-red-500">{error}</p>}
-
-          <div className="flex gap-3">
-            <Button variant="secondary" className="flex-1" onClick={() => setCheckoutOpen(false)}>
-              Cancelar
-            </Button>
-            <Button className="flex-1" onClick={handleCheckout} isLoading={loading}>
-              Confirmar pedido
-            </Button>
-          </div>
-        </div>
+        )}
       </Modal>
     </div>
   )

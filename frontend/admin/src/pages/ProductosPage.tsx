@@ -4,6 +4,7 @@ import { Plus, Edit2, Trash2, UtensilsCrossed, Filter, Search, ChevronRight, Che
 import { Modal } from '../components/common/Modal'
 import { Button } from '../components/common/Button'
 import { Card } from '../components/common/Card'
+import { Skeleton } from '../components/common/Skeleton'
 import { useProductos, useCreateProducto, useUpdateProducto, useDeleteProducto } from '../hooks/useProductos'
 import { useCategorias } from '../hooks/useCategorias'
 import { useIngredientes } from '../hooks/useIngredientes'
@@ -124,9 +125,22 @@ export function ProductosPage() {
   }
 
   if (isLoading) return (
-    <div className="flex flex-col items-center justify-center min-h-[400px] gap-4">
-      <div className="w-12 h-12 border-4 border-primary/20 border-t-primary rounded-full animate-spin" />
-      <p className="text-slate-500 font-medium italic">Preparando el menú...</p>
+    <div className="space-y-8">
+      <Skeleton className="h-9 w-48" />
+      <Skeleton className="h-12 w-full rounded-2xl" />
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {Array.from({ length: 6 }).map((_, i) => (
+          <Card key={i} className="flex flex-col gap-3">
+            <Skeleton className="h-40 w-full rounded-2xl" />
+            <Skeleton className="h-5 w-3/4" />
+            <Skeleton className="h-4 w-full" />
+            <div className="flex items-center justify-between mt-2">
+              <Skeleton className="h-6 w-16" />
+              <Skeleton className="h-9 w-20 rounded-xl" />
+            </div>
+          </Card>
+        ))}
+      </div>
     </div>
   )
 

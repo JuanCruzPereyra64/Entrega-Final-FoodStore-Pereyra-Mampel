@@ -19,15 +19,15 @@ def run_seed():
             update_data = IngredienteUpdate()
             needs_update = False
             
-            if ing.stock_minimo < 15:
-                update_data.stock_minimo = 15
+            if ing.stock_cantidad < 15:
+                update_data.stock_cantidad = 15
                 needs_update = True
                 
-            if ing.stock_actual < 15:
-                update_data.stock_actual = 15
+            if ing.stock_cantidad < 15:
+                update_data.stock_cantidad = 15
                 needs_update = True
-            elif ing.stock_actual > 60:
-                update_data.stock_actual = 60
+            elif ing.stock_cantidad > 60:
+                update_data.stock_cantidad = 60
                 needs_update = True
                 
             if needs_update:

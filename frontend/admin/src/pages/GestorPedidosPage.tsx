@@ -1,8 +1,10 @@
 import { useMemo } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { toast } from 'sonner'
 import { pedidosApi } from '../services/api'
 import { Card } from '../components/common/Card'
 import { Button } from '../components/common/Button'
+import { Skeleton } from '../components/common/Skeleton'
 import { LayoutDashboard } from 'lucide-react'
 import { formatCurrency } from '../utils/format'
 
@@ -15,14 +17,17 @@ export function GestorPedidosPage() {
 
   const updateMutation = useMutation({
     mutationFn: ({ id, estado }: { id: number, estado: string }) => pedidosApi.updateEstado(id, estado),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['pedidos'] })
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['pedidos'] })
+      toast.success('Estado del pedido actualizado')
+    },
+    onError: (err) => toast.error(err instanceof Error ? err.message : 'Error al actualizar pedido')
   })
 
   const estadoBadge: Record<string, { label: string; className: string }> = {
     PENDIENTE:  { label: 'Pendiente',       className: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400' },
     CONFIRMADO: { label: 'Confirmado',      className: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' },
     EN_PREP:    { label: 'En Preparación',  className: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400' },
-    EN_CAMINO:  { label: 'En Camino',       className: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400' },
     ENTREGADO:  { label: 'Entregado',       className: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' },
     CANCELADO:  { label: 'Cancelado',       className: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' },
   }
@@ -34,9 +39,8 @@ export function GestorPedidosPage() {
       PENDIENTE: 1,
       CONFIRMADO: 2,
       EN_PREP: 3,
-      EN_CAMINO: 4,
-      ENTREGADO: 5,
-      CANCELADO: 6
+      ENTREGADO: 4,
+      CANCELADO: 5
     }
 
     return [...pedidos].sort((a, b) => {
@@ -47,7 +51,24 @@ export function GestorPedidosPage() {
     })
   }, [pedidos])
 
-  if (isLoading) return <div className="flex justify-center p-10"><div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin" /></div>
+  if (isLoading) return (
+    <div className="space-y-8">
+      <Skeleton className="h-9 w-64" />
+      <Card noPadding className="overflow-hidden">
+        <div className="divide-y divide-slate-100 dark:divide-slate-800">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <div key={i} className="flex items-center gap-6 px-6 py-4">
+              <Skeleton className="h-4 w-12" />
+              <Skeleton className="h-4 w-36" />
+              <Skeleton className="h-4 w-20" />
+              <Skeleton className="h-5 w-24 rounded-full" />
+              <Skeleton className="h-8 w-24 rounded-xl" />
+            </div>
+          ))}
+        </div>
+      </Card>
+    </div>
+  )
 
   return (
     <div className="space-y-8">
@@ -89,9 +110,6 @@ export function GestorPedidosPage() {
                       <Button size="sm" variant="accent" onClick={() => updateMutation.mutate({ id: p.id, estado: 'EN_PREP' })}>Preparar</Button>
                     )}
                     {p.estado_codigo === 'EN_PREP' && (
-                      <Button size="sm" variant="primary" onClick={() => updateMutation.mutate({ id: p.id, estado: 'EN_CAMINO' })}>Despachar</Button>
-                    )}
-                    {p.estado_codigo === 'EN_CAMINO' && (
                       <Button size="sm" className="!bg-emerald-600 !shadow-emerald-600/20 hover:!bg-emerald-700" onClick={() => updateMutation.mutate({ id: p.id, estado: 'ENTREGADO' })}>Entregado</Button>
                     )}
                   </div>

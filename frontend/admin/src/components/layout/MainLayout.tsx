@@ -12,6 +12,8 @@ import {
   TrendingUp
 } from 'lucide-react'
 import { useState } from 'react'
+import { Toaster } from 'sonner'
+import { useAdminOrdersFeed } from '../../hooks/useAdminOrdersFeed'
 
 interface LayoutProps {
   children: React.ReactNode
@@ -30,6 +32,7 @@ const navItems = [
 export function MainLayout({ children }: LayoutProps) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
   const location = useLocation()
+  const wsConnected = useAdminOrdersFeed()
 
   return (
     <div className="min-h-screen flex bg-slate-50 dark:bg-slate-920">
@@ -97,7 +100,7 @@ export function MainLayout({ children }: LayoutProps) {
           </nav>
 
           {/* Footer Section */}
-          <div className="p-6 border-t border-slate-100 dark:border-slate-800">
+          <div className="p-6 border-t border-slate-100 dark:border-slate-800 space-y-2">
             <div className="bg-slate-50 dark:bg-slate-800/50 rounded-2xl p-4">
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden">
@@ -109,12 +112,17 @@ export function MainLayout({ children }: LayoutProps) {
                 </div>
               </div>
             </div>
+            <div className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition-colors ${wsConnected ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-900/20 dark:text-emerald-400' : 'bg-red-50 text-red-500 dark:bg-red-900/20 dark:text-red-400'}`}>
+              <span className={`w-2 h-2 rounded-full ${wsConnected ? 'bg-emerald-500' : 'bg-red-500'}`} />
+              {wsConnected ? 'Tiempo real activo' : 'Sin conexión'}
+            </div>
           </div>
         </div>
       </aside>
 
       {/* Main Content */}
       <main className="flex-1 min-w-0 flex flex-col">
+        <Toaster position="top-right" richColors />
         <div className="flex-1 overflow-x-hidden p-6 lg:p-10">
           <AnimatePresence mode="wait">
             <motion.div

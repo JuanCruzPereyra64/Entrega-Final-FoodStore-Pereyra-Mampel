@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react'
+import { toast } from 'sonner'
 import { authApi, direccionesApi } from '../services/api'
 import type { UsuarioRead, Direccion } from '../types'
 import { Button } from '../components/common/Button'
 import { Card, CardHeader } from '../components/common/Card'
 import { Modal } from '../components/common/Modal'
-import { MapPin, Plus, Pencil, Trash2, Star, Check } from 'lucide-react'
+import { MapPin, Plus, Pencil, Trash2, Star } from 'lucide-react'
 
 const INPUT = 'w-full bg-slate-50 dark:bg-slate-800 border-none rounded-2xl px-4 py-3 focus:ring-2 focus:ring-primary/20 text-sm'
 const LABEL = 'block text-sm font-semibold mb-1.5 text-slate-700 dark:text-slate-300'
@@ -18,7 +19,6 @@ export function PerfilPage() {
   const [apellido, setApellido] = useState('')
   const [celular, setCelular] = useState('')
   const [saving, setSaving] = useState(false)
-  const [saveSuccess, setSaveSuccess] = useState(false)
   const [saveError, setSaveError] = useState('')
 
   const [modalOpen, setModalOpen] = useState(false)
@@ -47,12 +47,10 @@ export function PerfilPage() {
     e.preventDefault()
     setSaving(true)
     setSaveError('')
-    setSaveSuccess(false)
     try {
       const updated = await authApi.updateMe({ nombre, apellido, celular: celular || undefined })
       setUsuario(updated)
-      setSaveSuccess(true)
-      setTimeout(() => setSaveSuccess(false), 3000)
+      toast.success('Cambios guardados correctamente')
     } catch (err: any) {
       setSaveError(err.message || 'Error al guardar')
     } finally {
@@ -166,11 +164,6 @@ export function PerfilPage() {
             <input className={`${INPUT} opacity-60 cursor-not-allowed`} value={usuario?.email || ''} disabled />
           </div>
           {saveError && <p className="text-sm text-red-500">{saveError}</p>}
-          {saveSuccess && (
-            <p className="text-sm text-green-600 flex items-center gap-1">
-              <Check size={14} /> Cambios guardados
-            </p>
-          )}
           <div className="flex justify-end pt-2">
             <Button type="submit" isLoading={saving}>Guardar cambios</Button>
           </div>

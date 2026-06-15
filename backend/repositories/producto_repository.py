@@ -20,6 +20,13 @@ class ProductoRepository(BaseRepository[Producto]):
         statement = statement.offset(offset).limit(limit)
         return list(self.session.exec(statement).all())
 
+    def count_all(self, categoria_id: Optional[int] = None) -> int:
+        from sqlalchemy import func
+        query = select(func.count(Producto.id))
+        if categoria_id:
+            query = query.join(ProductoCategoria).where(ProductoCategoria.categoria_id == categoria_id)
+        return self.session.exec(query).one()
+
     def get_by_id(self, producto_id: int) -> Optional[Producto]:
         statement = (
             select(Producto)

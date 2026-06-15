@@ -1,7 +1,8 @@
 from decimal import Decimal
 from datetime import datetime
 from typing import Optional
-from sqlmodel import SQLModel
+from sqlmodel import SQLModel, Field
+from pydantic import field_validator
 from backend.schemas.detalle_pedido import DetallePedidoCreate, DetallePedidoRead
 from backend.schemas.historial_estado_pedido import HistorialEstadoPedidoRead
 
@@ -39,3 +40,15 @@ class PedidoRead(PedidoBase):
 class PedidoReadConDetalles(PedidoRead):
     detalles: list[DetallePedidoRead]
     historial: list[HistorialEstadoPedidoRead]
+
+
+class AvanzarEstadoRequest(SQLModel):
+    nuevo_estado: str
+    motivo: Optional[str] = None
+
+    @field_validator("motivo")
+    @classmethod
+    def motivo_requerido_si_cancelado(cls, v, info):
+        if info.data.get("nuevo_estado") == "CANCELADO" and not v:
+            raise ValueError("El motivo es obligatorio cuando se cancela un pedido (RN-05)")
+        return v

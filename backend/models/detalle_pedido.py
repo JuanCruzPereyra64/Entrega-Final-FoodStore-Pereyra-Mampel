@@ -1,6 +1,6 @@
 from decimal import Decimal
 from datetime import datetime, timezone
-from typing import Optional, TYPE_CHECKING, Any
+from typing import Optional, TYPE_CHECKING
 from sqlmodel import Field, Relationship, SQLModel, Column, BigInteger, String, Numeric, DateTime, ForeignKey, JSON
 from sqlalchemy import SmallInteger
 
@@ -30,7 +30,7 @@ class DetallePedido(SQLModel, table=True):
     subtotal_snap: Decimal = Field(
         sa_column=Column(Numeric(10, 2), nullable=False)
     )
-    personalizacion: Optional[dict[str, Any]] = Field(
+    personalizacion: Optional[list[int]] = Field(
         default=None,
         sa_column=Column(JSON)
     )

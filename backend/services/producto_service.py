@@ -7,8 +7,13 @@ from backend.services import categoria_service, ingrediente_service
 from backend.uow.unit_of_work import UnitOfWork
 
 
-def get_all(uow: UnitOfWork, categoria_id: Optional[int] = None, offset: int = 0, limit: int = 100) -> list[Producto]:
-    return uow.productos.get_all(categoria_id, offset, limit)
+def get_all(uow: UnitOfWork, categoria_id: Optional[int] = None, page: int = 1, size: int = 20) -> list[Producto]:
+    offset = (page - 1) * size
+    return uow.productos.get_all(categoria_id, offset, size)
+
+
+def count_all(uow: UnitOfWork, categoria_id: Optional[int] = None) -> int:
+    return uow.productos.count_all(categoria_id)
 
 
 def get_by_id(uow: UnitOfWork, producto_id: int) -> Producto:
@@ -39,7 +44,7 @@ def create(uow: UnitOfWork, data: ProductoCreate) -> Producto:
 
     # Unir ingredientes
     for ing in data.ingredientes:
-        link_ing = ProductoIngrediente(producto_id=producto.id, ingrediente_id=ing.id, cantidad_requerida=ing.cantidad_requerida)
+        link_ing = ProductoIngrediente(producto_id=producto.id, ingrediente_id=ing.id, cantidad=ing.cantidad)
         uow.session.add(link_ing)
     
     uow.session.flush()
@@ -66,7 +71,7 @@ def update(uow: UnitOfWork, producto_id: int, data: ProductoUpdate) -> Producto:
         
         for ing in data.ingredientes:
             ingrediente_service.get_by_id(uow, ing.id)
-            link = ProductoIngrediente(producto_id=producto_id, ingrediente_id=ing.id, cantidad_requerida=ing.cantidad_requerida)
+            link = ProductoIngrediente(producto_id=producto_id, ingrediente_id=ing.id, cantidad=ing.cantidad)
             uow.session.add(link)
 
     for key, value in data.model_dump(exclude_unset=True, exclude={"ingredientes", "categoria_ids"}).items():
@@ -83,17 +88,24 @@ def delete(uow: UnitOfWork, producto_id: int) -> None:
     uow.session.flush()
 
 
-def add_ingrediente(uow: UnitOfWork, producto_id: int, ingrediente_id: int) -> Producto:
+def add_ingrediente(uow: UnitOfWork, producto_id: int, ingrediente_id: int, cantidad: float = 1.0, unidad_medida_id: int = None) -> ProductoIngrediente:
     producto = get_by_id(uow, producto_id)
     ingrediente_service.get_by_id(uow, ingrediente_id)
     
     existing = uow.session.get(ProductoIngrediente, (producto_id, ingrediente_id))
-    if not existing:
-        link = ProductoIngrediente(producto_id=producto_id, ingrediente_id=ingrediente_id)
-        uow.session.add(link)
-        uow.session.flush()
+    if existing:
+        raise HTTPException(status_code=400, detail="El ingrediente ya está asociado al producto")
     
-    return get_by_id(uow, producto_id)
+    link = ProductoIngrediente(
+        producto_id=producto_id,
+        ingrediente_id=ingrediente_id,
+        cantidad=cantidad,
+        unidad_medida_id=unidad_medida_id,
+    )
+    uow.session.add(link)
+    uow.session.flush()
+    uow.session.refresh(link)
+    return link
 
 
 def remove_ingrediente(uow: UnitOfWork, producto_id: int, ingrediente_id: int) -> Producto:

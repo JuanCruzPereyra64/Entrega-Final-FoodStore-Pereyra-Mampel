@@ -1,17 +1,21 @@
-import { useState } from 'react'
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { useQuery } from '@tanstack/react-query'
+import { toast } from 'sonner'
 import { pedidosApi } from '../services/api'
 import { useCartStore } from '../store/useCartStore'
+import { useOrderStatusWS } from '../hooks/useOrderStatusWS'
 import { Card } from '../components/common/Card'
 import { Button } from '../components/common/Button'
-import { Package, RefreshCcw, ShoppingBag, ChevronRight } from 'lucide-react'
+import { Skeleton } from '../components/common/Skeleton'
+import { cloudinaryUrl } from '../utils/cloudinary'
+import { Package, RefreshCcw, ShoppingBag } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 
 export function PedidosPage() {
+  useOrderStatusWS()
   const qc = useQueryClient()
   const navigate = useNavigate()
   const addItem = useCartStore(s => s.addItem)
-  const [cancelError, setCancelError] = useState('')
 
   const { data: pedidos, isLoading } = useQuery({
     queryKey: ['mis-pedidos'],
@@ -21,11 +25,11 @@ export function PedidosPage() {
   const cancelMutation = useMutation({
     mutationFn: (id: number) => pedidosApi.cancelar(id),
     onSuccess: () => {
-      setCancelError('')
+      toast.success('Pedido cancelado exitosamente')
       qc.invalidateQueries({ queryKey: ['mis-pedidos'] })
     },
     onError: (err: any) => {
-      setCancelError(err.message || 'No se pudo cancelar el pedido')
+      toast.error(err.message || 'No se pudo cancelar el pedido')
     }
   })
 
@@ -47,15 +51,39 @@ export function PedidosPage() {
     navigate('/carrito')
   }
 
-  if (isLoading) return <div className="flex justify-center p-10"><div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin" /></div>
+  if (isLoading) return (
+    <div className="max-w-4xl mx-auto space-y-8">
+      <Skeleton className="h-9 w-40" />
+      <div className="space-y-4">
+        {Array.from({ length: 3 }).map((_, i) => (
+          <Card key={i} className="flex flex-col md:flex-row justify-between gap-6">
+            <div className="flex-1 space-y-4">
+              <Skeleton className="h-6 w-32" />
+              <Skeleton className="h-4 w-48" />
+              <div className="space-y-3 p-4">
+                <Skeleton className="h-4 w-28" />
+                <div className="flex items-center gap-3">
+                  <Skeleton className="w-12 h-12 rounded-xl" />
+                  <div className="flex-1 space-y-1">
+                    <Skeleton className="h-4 w-40" />
+                    <Skeleton className="h-3 w-20" />
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div className="flex flex-col items-end gap-3">
+              <Skeleton className="h-5 w-24 rounded-full" />
+              <Skeleton className="h-8 w-20" />
+            </div>
+          </Card>
+        ))}
+      </div>
+    </div>
+  )
 
   return (
     <div className="max-w-4xl mx-auto space-y-8">
       <h1 className="text-3xl font-bold font-display">Mis Pedidos</h1>
-
-      {cancelError && (
-        <div className="bg-red-50 text-red-600 p-4 rounded-xl text-sm">{cancelError}</div>
-      )}
 
       {pedidos?.length === 0 ? (
         <div className="flex flex-col items-center justify-center p-20 text-center">
@@ -79,7 +107,7 @@ export function PedidosPage() {
                     <div key={det.id} className="flex items-center gap-3">
                       <div className="w-12 h-12 rounded-xl bg-white dark:bg-slate-800 overflow-hidden shrink-0 border border-slate-200 dark:border-slate-700">
                         {det.producto?.imagenes_url?.[0] ? (
-                          <img src={det.producto.imagenes_url[0]} alt={det.nombre_producto_snap} className="w-full h-full object-cover" />
+                          <img src={cloudinaryUrl(det.producto.imagenes_url[0])} alt={det.nombre_producto_snap} className="w-full h-full object-cover" />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center text-slate-400">
                             <ShoppingBag size={16} />
@@ -114,7 +142,7 @@ export function PedidosPage() {
                   {(p.estado_codigo === 'PENDIENTE' || p.estado_codigo === 'CONFIRMADO') && (
                     <Button 
                       size="sm" 
-                      variant="outline" 
+                      variant="ghost" 
                       className="w-full justify-center text-red-600 border-red-200 hover:bg-red-50"
                       isLoading={cancelMutation.isPending}
                       onClick={() => cancelMutation.mutate(p.id)}

@@ -2,7 +2,7 @@ import axios from 'axios'
 import { useAuthStore } from '../store/useAuthStore'
 
 export const apiClient = axios.create({
-  baseURL: 'http://localhost:8000',
+  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:8000',
 })
 
 apiClient.interceptors.request.use((config) => {
@@ -14,9 +14,14 @@ apiClient.interceptors.request.use((config) => {
 })
 
 apiClient.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    if (response.data && typeof response.data === 'object' && Array.isArray(response.data.items)) {
+      response.data = response.data.items
+    }
+    return response
+  },
   (error) => {
-    const isLoginRoute = error.config?.url?.includes('/usuarios/login')
+    const isLoginRoute = error.config?.url?.includes('/api/v1/auth/login')
     if (error.response?.status === 401 && !isLoginRoute) {
       useAuthStore.getState().logout()
       window.location.href = '/login'
@@ -48,66 +53,74 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
 }
 
 export const categoriasApi = {
-  getAll: () => request<import('../types').Categoria[]>('/categorias/'),
-  getById: (id: number) => request<import('../types').Categoria>(`/categorias/${id}`),
+  getAll: () => request<import('../types').Categoria[]>('/api/v1/categorias/'),
+  getById: (id: number) => request<import('../types').Categoria>(`/api/v1/categorias/${id}`),
   create: (data: import('../types').CategoriaCreate) =>
-    request<import('../types').Categoria>('/categorias/', { method: 'POST', body: JSON.stringify(data) }),
+    request<import('../types').Categoria>('/api/v1/categorias/', { method: 'POST', body: JSON.stringify(data) }),
   update: (id: number, data: Partial<import('../types').CategoriaCreate>) =>
-    request<import('../types').Categoria>(`/categorias/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
-  delete: (id: number) => request<void>(`/categorias/${id}`, { method: 'DELETE' }),
+    request<import('../types').Categoria>(`/api/v1/categorias/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+  delete: (id: number) => request<void>(`/api/v1/categorias/${id}`, { method: 'DELETE' }),
 }
 
 export const ingredientesApi = {
-  getAll: () => request<import('../types').Ingrediente[]>('/ingredientes/'),
-  getById: (id: number) => request<import('../types').Ingrediente>(`/ingredientes/${id}`),
+  getAll: () => request<import('../types').Ingrediente[]>('/api/v1/ingredientes/'),
+  getById: (id: number) => request<import('../types').Ingrediente>(`/api/v1/ingredientes/${id}`),
   create: (data: import('../types').IngredienteCreate) =>
-    request<import('../types').Ingrediente>('/ingredientes/', { method: 'POST', body: JSON.stringify(data) }),
+    request<import('../types').Ingrediente>('/api/v1/ingredientes/', { method: 'POST', body: JSON.stringify(data) }),
   update: (id: number, data: Partial<import('../types').IngredienteCreate>) =>
-    request<import('../types').Ingrediente>(`/ingredientes/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
-  delete: (id: number) => request<void>(`/ingredientes/${id}`, { method: 'DELETE' }),
+    request<import('../types').Ingrediente>(`/api/v1/ingredientes/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+  delete: (id: number) => request<void>(`/api/v1/ingredientes/${id}`, { method: 'DELETE' }),
 }
 
 export const productosApi = {
   getAll: (categoriaId?: number) => {
     const params = categoriaId ? `?categoria_id=${categoriaId}` : ''
-    return request<import('../types').Producto[]>(`/productos/${params}`)
+    return request<import('../types').Producto[]>(`/api/v1/productos/${params}`)
   },
-  getById: (id: number) => request<import('../types').Producto>(`/productos/${id}`),
+  getById: (id: number) => request<import('../types').Producto>(`/api/v1/productos/${id}`),
   create: (data: import('../types').ProductoCreate) =>
-    request<import('../types').Producto>('/productos/', { method: 'POST', body: JSON.stringify(data) }),
+    request<import('../types').Producto>('/api/v1/productos/', { method: 'POST', body: JSON.stringify(data) }),
   update: (id: number, data: Partial<import('../types').ProductoCreate>) =>
-    request<import('../types').Producto>(`/productos/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
-  delete: (id: number) => request<void>(`/productos/${id}`, { method: 'DELETE' }),
+    request<import('../types').Producto>(`/api/v1/productos/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+  delete: (id: number) => request<void>(`/api/v1/productos/${id}`, { method: 'DELETE' }),
   addIngrediente: (productoId: number, ingredienteId: number) =>
-    request<import('../types').Producto>(`/productos/${productoId}/ingredientes/${ingredienteId}`, { method: 'POST' }),
+    request<import('../types').Producto>(`/api/v1/productos/${productoId}/ingredientes/${ingredienteId}`, { method: 'POST' }),
   removeIngrediente: (productoId: number, ingredienteId: number) =>
-    request<import('../types').Producto>(`/productos/${productoId}/ingredientes/${ingredienteId}`, { method: 'DELETE' }),
+    request<import('../types').Producto>(`/api/v1/productos/${productoId}/ingredientes/${ingredienteId}`, { method: 'DELETE' }),
 }
 
 export const authApi = {
   login: (data: import('../types').UsuarioLogin) =>
-    request<{message: string, rol: string[], access_token: string}>('/usuarios/login', { method: 'POST', body: JSON.stringify(data) }),
-  logout: () => request<{message: string}>('/usuarios/logout', { method: 'POST' }),
-  me: () => request<import('../types').UsuarioRead>('/usuarios/me'),
+    request<{message: string, rol: string[], access_token: string}>('/api/v1/auth/login', { method: 'POST', body: JSON.stringify(data) }),
+  logout: () => request<{message: string}>('/api/v1/auth/logout', { method: 'POST' }),
+  me: () => request<import('../types').UsuarioRead>('/api/v1/auth/me'),
   register: (data: import('../types').UsuarioCreate) =>
-    request<import('../types').UsuarioRead>('/usuarios/registro', { method: 'POST', body: JSON.stringify(data) }),
+    request<import('../types').UsuarioRead>('/api/v1/auth/registro', { method: 'POST', body: JSON.stringify(data) }),
   updateMe: (data: import('../types').UsuarioUpdate) =>
-    request<import('../types').UsuarioRead>('/usuarios/me', { method: 'PUT', body: JSON.stringify(data) }),
+    request<import('../types').UsuarioRead>('/api/v1/auth/me', { method: 'PUT', body: JSON.stringify(data) }),
 }
 
 export const direccionesApi = {
-  getAll: () => request<import('../types').Direccion[]>('/direcciones/'),
+  getAll: () => request<import('../types').Direccion[]>('/api/v1/direcciones/'),
   create: (data: import('../types').DireccionCreate) =>
-    request<import('../types').Direccion>('/direcciones/', { method: 'POST', body: JSON.stringify(data) }),
+    request<import('../types').Direccion>('/api/v1/direcciones/', { method: 'POST', body: JSON.stringify(data) }),
   update: (id: number, data: import('../types').DireccionUpdate) =>
-    request<import('../types').Direccion>(`/direcciones/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
-  delete: (id: number) => request<void>(`/direcciones/${id}`, { method: 'DELETE' }),
+    request<import('../types').Direccion>(`/api/v1/direcciones/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+  delete: (id: number) => request<void>(`/api/v1/direcciones/${id}`, { method: 'DELETE' }),
   setPrincipal: (id: number) =>
-    request<import('../types').Direccion>(`/direcciones/${id}/principal`, { method: 'PATCH' }),
+    request<import('../types').Direccion>(`/api/v1/direcciones/${id}/principal`, { method: 'PATCH' }),
 }
 
 export const pedidosApi = {
-  getAll: () => request<import('../types').Pedido[]>('/pedidos/'),
-  create: (data: any) => request<import('../types').Pedido>('/pedidos/', { method: 'POST', body: JSON.stringify(data) }),
-  cancelar: (id: number) => request<import('../types').Pedido>(`/pedidos/${id}/cancelar`, { method: 'PATCH' }),
+  getAll: () => request<import('../types').Pedido[]>('/api/v1/pedidos/'),
+  create: (data: any) => request<import('../types').Pedido>('/api/v1/pedidos/', { method: 'POST', body: JSON.stringify(data) }),
+  cancelar: (id: number) => request<import('../types').Pedido>(`/api/v1/pedidos/${id}`, { method: 'DELETE' }),
+}
+
+export const pagosApi = {
+  getPublicKey: () => request<{ public_key: string }>('/api/v1/pagos/public-key'),
+  crear: (data: import('../types').PagoCreate) =>
+    request<import('../types').PagoResponse>('/api/v1/pagos/crear', { method: 'POST', body: JSON.stringify(data) }),
+  getByPedido: (pedidoId: number) =>
+    request<import('../types').PagoResponse>(`/api/v1/pagos/${pedidoId}`),
 }

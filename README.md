@@ -49,7 +49,7 @@ uvicorn backend.main:app --reload
 - **Documentación Swagger:** http://localhost:8000/docs
 
 *Credenciales por defecto creadas por el Seed:*
-- **Admin:** `admin@admin.com` | Password: `admin`
+- **Admin:** `admin@foodstore.com` | Password: `Admin1234!`
 - **Cliente:** `test@test.com` | Password: `123456`
 
 ### 2. Iniciar Frontend - E-Commerce (Store)
