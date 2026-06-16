@@ -33,11 +33,6 @@ def crear_preferencia(
             current_user.id,
             data.pedido_id,
             data.email,
-            {
-                "success": data.back_url_success,
-                "failure": data.back_url_failure,
-                "pending": data.back_url_pending,
-            }
         )
 
 

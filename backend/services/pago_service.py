@@ -85,7 +85,7 @@ def crear_pago(uow: UnitOfWork, usuario_id: int, data: PagoCreate) -> Pago:
     return pago
 
 
-def crear_preferencia(uow: UnitOfWork, usuario_id: int, pedido_id: int, email: str, back_urls: dict) -> dict:
+def crear_preferencia(uow: UnitOfWork, usuario_id: int, pedido_id: int, email: str) -> dict:
     if mp_sdk is None:
         raise HTTPException(status_code=500, detail="MercadoPago no configurado")
 
@@ -106,11 +106,17 @@ def crear_preferencia(uow: UnitOfWork, usuario_id: int, pedido_id: int, email: s
             "currency_id": "ARS",
         })
 
+    base = settings.frontend_url.rstrip("/")
+    resolved_back_urls = {
+        "success": f"{base}/mis-pedidos",
+        "failure": f"{base}/carrito",
+        "pending": f"{base}/mis-pedidos",
+    }
     preference_data = {
         "items": items,
         "payer": {"email": email},
         "external_reference": str(pedido_id),
-        "back_urls": back_urls,
+        "back_urls": resolved_back_urls,
         "auto_return": "approved",
     }
     if settings.mp_notification_url:

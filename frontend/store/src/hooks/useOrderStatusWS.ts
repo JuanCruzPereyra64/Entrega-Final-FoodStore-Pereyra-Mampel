@@ -4,7 +4,8 @@ import { useQueryClient } from '@tanstack/react-query'
 import { useAuthStore } from '../store/useAuthStore'
 import { useWsStore } from '../store/useWsStore'
 
-const WS_URL = 'ws://localhost:8000/ws/mis-pedidos'
+const API_BASE = (import.meta.env.VITE_API_URL || 'http://localhost:8000').replace(/^http/, 'ws')
+const WS_URL = `${API_BASE}/ws/mis-pedidos`
 const RECONNECT_DELAY = 3000
 const PING_INTERVAL = 25000
 
