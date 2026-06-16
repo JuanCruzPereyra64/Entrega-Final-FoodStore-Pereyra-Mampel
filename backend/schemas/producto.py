@@ -1,3 +1,4 @@
+from decimal import Decimal
 from typing import Optional
 from sqlmodel import SQLModel, Field
 from backend.schemas.categoria import CategoriaRead
@@ -42,7 +43,7 @@ class ProductoUpdate(SQLModel):
 class ProductoReadBasico(SQLModel):
     id: int
     nombre: str
-    precio_base: float
+    precio_base: Decimal
     descripcion: Optional[str] = None
     imagenes_url: list[str] = []
 

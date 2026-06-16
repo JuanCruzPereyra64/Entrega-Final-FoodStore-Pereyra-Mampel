@@ -23,14 +23,15 @@ def get_pedidos(
             pedidos = pedido_service.get_by_usuario(uow, current_user.id)
         else:
             pedidos = pedido_service.get_all(uow)
-            
+
         for p in pedidos:
             _ = p.detalles
             if p.detalles:
                 for d in p.detalles:
                     _ = d.producto
             _ = p.historial
-        return PaginatedResponse.create(items=pedidos, total=len(pedidos), page=page, size=size)
+        pedidos_schema = [PedidoReadConDetalles.model_validate(p) for p in pedidos]
+        return PaginatedResponse.create(items=pedidos_schema, total=len(pedidos_schema), page=page, size=size)
 
 @router.post("/", response_model=PedidoReadConDetalles, status_code=status.HTTP_201_CREATED)
 def crear_pedido(

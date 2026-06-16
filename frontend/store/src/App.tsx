@@ -11,7 +11,7 @@ import { PerfilPage } from './pages/PerfilPage'
 function App() {
   return (
     <>
-      <Toaster richColors position="top-right" />
+      <Toaster richColors position="top-right" duration={2000} />
       <BrowserRouter>
         <Routes>
           <Route path="/login" element={<LoginPage />} />

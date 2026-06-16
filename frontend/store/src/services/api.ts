@@ -121,7 +121,7 @@ export const pagosApi = {
   getPublicKey: () => request<{ public_key: string }>('/api/v1/pagos/public-key'),
   crear: (data: import('../types').PagoCreate) =>
     request<import('../types').PagoResponse>('/api/v1/pagos/crear', { method: 'POST', body: JSON.stringify(data) }),
-  crearPreferencia: (data: { pedido_id: number; email: string }) =>
+  crearPreferencia: (data: { pedido_id: number; email: string; frontend_url?: string }) =>
     request<{ preference_id: string; init_point: string; sandbox_init_point: string }>(
       '/api/v1/pagos/preferencia',
       { method: 'POST', body: JSON.stringify(data) }

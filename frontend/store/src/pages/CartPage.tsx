@@ -13,7 +13,6 @@ import { useNavigate, Link } from 'react-router-dom'
 const FORMAS_PAGO = [
   { codigo: 'MERCADOPAGO', label: 'MercadoPago' },
   { codigo: 'EFECTIVO', label: 'Efectivo' },
-  { codigo: 'TRANSFERENCIA', label: 'Transferencia' },
 ]
 
 export function CartPage() {
@@ -58,7 +57,9 @@ export function CartPage() {
 
       if (formaPago === 'MERCADOPAGO') {
         const user = await authApi.me()
-        const pref = await pagosApi.crearPreferencia({ pedido_id: pedido.id, email: user.email })
+        const localBase = `http://localhost:${window.location.port || '5173'}`
+        const pref = await pagosApi.crearPreferencia({ pedido_id: pedido.id, email: user.email, frontend_url: localBase })
+        clearCart()
         window.location.href = pref.sandbox_init_point
         return
       }

@@ -34,19 +34,16 @@ export function PedidosPage() {
   })
 
   const handleRepetirPedido = (pedido: any) => {
-    if (!pedido.detalles) return
+    if (!pedido.detalles?.length) return
     pedido.detalles.forEach((det: any) => {
-      // Si el producto sigue existiendo, lo agregamos al carrito
-      if (det.producto) {
-        addItem({
-          id: Date.now() + det.producto_id,
-          producto_id: det.producto_id,
-          cantidad: det.cantidad,
-          precio: Number(det.producto.precio_base) || Number(det.precio_unitario_snap) || 0,
-          nombre: det.producto.nombre || det.nombre_producto_snap,
-          imagen_url: det.producto?.imagenes_url?.[0]
-        })
-      }
+      addItem({
+        id: Date.now() + det.producto_id,
+        producto_id: det.producto_id,
+        cantidad: det.cantidad,
+        precio: Number(det.producto?.precio_base) || Number(det.precio_unitario_snap) || 0,
+        nombre: det.producto?.nombre || det.nombre_producto_snap,
+        imagen_url: det.producto?.imagenes_url?.[0]
+      })
     })
     navigate('/carrito')
   }
@@ -104,7 +101,7 @@ export function PedidosPage() {
                 <div className="space-y-3 bg-slate-50 dark:bg-slate-900/50 p-4 rounded-2xl">
                   <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest">Detalle del pedido</h4>
                   {p.detalles?.map(det => (
-                    <div key={det.id} className="flex items-center gap-3">
+                    <div key={`${p.id}-${det.producto_id}`} className="flex items-center gap-3">
                       <div className="w-12 h-12 rounded-xl bg-white dark:bg-slate-800 overflow-hidden shrink-0 border border-slate-200 dark:border-slate-700">
                         {det.producto?.imagenes_url?.[0] ? (
                           <img src={cloudinaryUrl(det.producto.imagenes_url[0])} alt={det.nombre_producto_snap} className="w-full h-full object-cover" />

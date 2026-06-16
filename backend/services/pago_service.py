@@ -108,9 +108,9 @@ def crear_preferencia(uow: UnitOfWork, usuario_id: int, pedido_id: int, email: s
 
     base = settings.frontend_url.rstrip("/")
     resolved_back_urls = {
-        "success": f"{base}/mis-pedidos",
-        "failure": f"{base}/carrito",
-        "pending": f"{base}/mis-pedidos",
+        "success": "localhost:5173/mis-pedidos",
+        "failure": "localhost:5173/carrito",
+        "pending": "localhost:5173/mis-pedidos",
     }
     preference_data = {
         "items": items,
