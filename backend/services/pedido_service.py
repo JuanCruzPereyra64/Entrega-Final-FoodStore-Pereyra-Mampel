@@ -9,6 +9,7 @@ from sqlmodel import select
 from backend.models.producto import ProductoIngrediente
 from backend.models.ingrediente import Ingrediente
 from backend.services import movimiento_stock_service
+from backend.core.ws_manager import ws_manager
 
 FSM_TRANSICIONES = {
     "PENDIENTE": {"CONFIRMADO", "CANCELADO"},
@@ -197,6 +198,27 @@ def get_all(uow: UnitOfWork):
 
 def get_by_usuario(uow: UnitOfWork, usuario_id: int):
     return uow.pedidos.get_by_usuario_id(usuario_id)
+
+def broadcast_cambio_estado(
+    pedido_id: int,
+    estado_anterior: str,
+    estado_nuevo: str,
+    usuario_id: int,
+    pedido_usuario_id: int,
+    motivo: str = None,
+) -> None:
+    event_type = "pedido_cancelado" if estado_nuevo == "CANCELADO" else "estado_cambiado"
+    evento = ws_manager._build_evento(
+        event_type=event_type,
+        pedido_id=pedido_id,
+        estado_anterior=estado_anterior,
+        estado_nuevo=estado_nuevo,
+        usuario_id=usuario_id,
+        motivo=motivo,
+    )
+    ws_manager.broadcast_pedido(pedido_id, evento)
+    ws_manager.broadcast_to_user(pedido_usuario_id, evento)
+
 
 def cancelar_pedido_cliente(uow: UnitOfWork, pedido_id: int, usuario_id: int) -> Pedido:
     pedido = uow.pedidos.get_by_id(pedido_id)

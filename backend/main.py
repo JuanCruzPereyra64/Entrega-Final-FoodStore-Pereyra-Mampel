@@ -15,7 +15,7 @@ from backend.routers import categorias, ingredientes, productos, usuarios, pedid
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    ws_manager.set_loop(asyncio.get_event_loop())
+    ws_manager.set_loop(asyncio.get_running_loop())
     create_db_and_tables()
     yield
 

@@ -123,3 +123,21 @@ def update_disponibilidad(uow: UnitOfWork, producto_id: int, disponible: bool) -
     uow.session.flush()
     uow.session.refresh(producto)
     return producto
+
+
+def update_stock(uow: UnitOfWork, producto_id: int, stock_cantidad: int) -> Producto:
+    producto = get_by_id(uow, producto_id)
+    producto.stock_cantidad = stock_cantidad
+    uow.productos.add(producto)
+    uow.session.flush()
+    uow.session.refresh(producto)
+    return producto
+
+
+def update_imagenes(uow: UnitOfWork, producto_id: int, imagenes_url: list[str]) -> Producto:
+    producto = get_by_id(uow, producto_id)
+    producto.imagenes_url = imagenes_url
+    uow.productos.add(producto)
+    uow.session.flush()
+    uow.session.refresh(producto)
+    return producto

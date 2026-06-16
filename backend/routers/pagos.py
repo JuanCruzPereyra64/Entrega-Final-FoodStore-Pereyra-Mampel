@@ -1,7 +1,7 @@
 from pydantic import BaseModel
 from fastapi import APIRouter, Depends, Request, status
 from backend.database import get_uow
-from backend.schemas.pago import PagoCreate, PagoResponse
+from backend.schemas.pago import PagoCreate, PagoResponse, PreferenciaCreate, PreferenciaResponse
 from backend.services import pago_service
 from backend.uow.unit_of_work import UnitOfWork
 from backend.models.usuario import Usuario
@@ -19,6 +19,26 @@ class PublicKeyResponse(BaseModel):
 @router.get("/public-key", response_model=PublicKeyResponse)
 def get_public_key():
     return PublicKeyResponse(public_key=settings.mp_public_key)
+
+
+@router.post("/preferencia", response_model=PreferenciaResponse, status_code=status.HTTP_201_CREATED)
+def crear_preferencia(
+    data: PreferenciaCreate,
+    current_user: Usuario = Depends(check_role(["CLIENT"])),
+    uow: UnitOfWork = Depends(get_uow)
+):
+    with uow:
+        return pago_service.crear_preferencia(
+            uow,
+            current_user.id,
+            data.pedido_id,
+            data.email,
+            {
+                "success": data.back_url_success,
+                "failure": data.back_url_failure,
+                "pending": data.back_url_pending,
+            }
+        )
 
 
 @router.post("/crear", response_model=PagoResponse, status_code=status.HTTP_201_CREATED)

@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { toast } from 'sonner'
 import { useCartStore } from '../store/useCartStore'
-import { pedidosApi, direccionesApi } from '../services/api'
+import { pedidosApi, direccionesApi, pagosApi, authApi } from '../services/api'
 import type { Direccion } from '../types'
 import { Button } from '../components/common/Button'
 import { Card } from '../components/common/Card'
@@ -57,7 +57,9 @@ export function CartPage() {
       })
 
       if (formaPago === 'MERCADOPAGO') {
-        setPaymentPedido({ id: pedido.id, total: pedido.total })
+        const user = await authApi.me()
+        const pref = await pagosApi.crearPreferencia({ pedido_id: pedido.id, email: user.email })
+        window.location.href = pref.sandbox_init_point
         return
       }
 

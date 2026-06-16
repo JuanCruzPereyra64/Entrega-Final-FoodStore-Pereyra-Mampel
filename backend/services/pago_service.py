@@ -85,6 +85,49 @@ def crear_pago(uow: UnitOfWork, usuario_id: int, data: PagoCreate) -> Pago:
     return pago
 
 
+def crear_preferencia(uow: UnitOfWork, usuario_id: int, pedido_id: int, email: str, back_urls: dict) -> dict:
+    if mp_sdk is None:
+        raise HTTPException(status_code=500, detail="MercadoPago no configurado")
+
+    pedido = uow.pedidos.get_by_id(pedido_id)
+    if not pedido:
+        raise HTTPException(status_code=404, detail="Pedido no encontrado")
+    if pedido.usuario_id != usuario_id:
+        raise HTTPException(status_code=403, detail="No tenés permiso para pagar este pedido")
+
+    _ = pedido.detalles
+    items = []
+    for detalle in pedido.detalles:
+        _ = detalle.producto
+        items.append({
+            "title": detalle.producto.nombre if detalle.producto else f"Producto #{detalle.producto_id}",
+            "quantity": detalle.cantidad,
+            "unit_price": float(detalle.precio_unitario_snap),
+            "currency_id": "ARS",
+        })
+
+    preference_data = {
+        "items": items,
+        "payer": {"email": email},
+        "external_reference": str(pedido_id),
+        "back_urls": back_urls,
+        "auto_return": "approved",
+    }
+    if settings.mp_notification_url:
+        preference_data["notification_url"] = settings.mp_notification_url
+
+    result = mp_sdk.preference().create(preference_data)
+    if result["status"] not in (200, 201):
+        raise HTTPException(status_code=502, detail="Error al crear preferencia en MercadoPago")
+
+    response = result["response"]
+    return {
+        "preference_id": response["id"],
+        "init_point": response["init_point"],
+        "sandbox_init_point": response["sandbox_init_point"],
+    }
+
+
 def procesar_webhook(uow: UnitOfWork, mp_payment_id: int) -> Pago:
     if mp_sdk is None:
         raise HTTPException(status_code=500, detail="MercadoPago no configurado")

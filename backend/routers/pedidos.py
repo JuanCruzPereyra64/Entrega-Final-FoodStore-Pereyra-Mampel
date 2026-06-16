@@ -8,7 +8,6 @@ from backend.services import pedido_service
 from backend.uow.unit_of_work import UnitOfWork
 from backend.models.usuario import Usuario
 from backend.api.deps import check_role
-from backend.core.ws_manager import ws_manager
 
 router = APIRouter(prefix="/api/v1/pedidos", tags=["Pedidos"])
 
@@ -79,34 +78,29 @@ def get_pedido_historial(
 
 @router.patch("/{pedido_id}/estado", response_model=PedidoReadConDetalles)
 def transicionar_estado(
-    pedido_id: int, 
-    data: AvanzarEstadoRequest, 
-    current_user: Usuario = Depends(check_role(["ADMIN", "PEDIDOS"])), 
+    pedido_id: int,
+    data: AvanzarEstadoRequest,
+    current_user: Usuario = Depends(check_role(["ADMIN", "PEDIDOS"])),
     uow: UnitOfWork = Depends(get_uow)
 ):
     with uow:
-        pedido = uow.pedidos.get_by_id(pedido_id)
-        estado_anterior = pedido.estado_codigo if pedido else None
+        pedido_actual = uow.pedidos.get_by_id(pedido_id)
+        estado_anterior = pedido_actual.estado_codigo if pedido_actual else None
 
         pedido = pedido_service.transicionar_estado(uow, pedido_id, data.nuevo_estado, current_user.id, data.motivo)
-        _ = pedido.detalles
-        if pedido.detalles:
-            for d in pedido.detalles:
-                _ = d.producto
+        for d in pedido.detalles:
+            _ = d.producto
         _ = pedido.historial
 
     if estado_anterior:
-        event_type = "pedido_cancelado" if data.nuevo_estado == "CANCELADO" else "estado_cambiado"
-        evento = ws_manager._build_evento(
-            event_type=event_type,
+        pedido_service.broadcast_cambio_estado(
             pedido_id=pedido_id,
             estado_anterior=estado_anterior,
             estado_nuevo=data.nuevo_estado,
             usuario_id=current_user.id,
+            pedido_usuario_id=pedido.usuario_id,
             motivo=data.motivo,
         )
-        ws_manager.broadcast_pedido(pedido_id, evento)
-        ws_manager.broadcast_to_user(pedido.usuario_id, evento)
 
     return pedido
 
@@ -118,26 +112,22 @@ def cancelar_pedido_cliente(
     uow: UnitOfWork = Depends(get_uow)
 ):
     with uow:
-        pedido = uow.pedidos.get_by_id(pedido_id)
-        estado_anterior = pedido.estado_codigo if pedido else None
+        pedido_actual = uow.pedidos.get_by_id(pedido_id)
+        estado_anterior = pedido_actual.estado_codigo if pedido_actual else None
 
         pedido = pedido_service.cancelar_pedido_cliente(uow, pedido_id, current_user.id)
-        _ = pedido.detalles
-        if pedido.detalles:
-            for d in pedido.detalles:
-                _ = d.producto
+        for d in pedido.detalles:
+            _ = d.producto
         _ = pedido.historial
 
     if estado_anterior:
-        evento = ws_manager._build_evento(
-            event_type="pedido_cancelado",
+        pedido_service.broadcast_cambio_estado(
             pedido_id=pedido_id,
             estado_anterior=estado_anterior,
             estado_nuevo="CANCELADO",
             usuario_id=current_user.id,
+            pedido_usuario_id=pedido.usuario_id,
             motivo="Cancelado por el cliente",
         )
-        ws_manager.broadcast_pedido(pedido_id, evento)
-        ws_manager.broadcast_to_user(pedido.usuario_id, evento)
 
     return pedido

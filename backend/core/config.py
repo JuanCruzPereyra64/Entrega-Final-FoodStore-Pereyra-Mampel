@@ -1,13 +1,16 @@
 import json
+from pathlib import Path
 from typing import Optional
 import cloudinary
 import mercadopago
 from pydantic_settings import BaseSettings
 
+_ENV_FILE = Path(__file__).parent.parent / ".env"
+
 
 class Settings(BaseSettings):
     database_url: str = "sqlite:///./foodstore.db"
-    secret_key: str = "09d25e094faa6ca2556c818166b7a9563b93f7099f6f0f4caa6cf63b88e8d3e7"
+    secret_key: str  # Required — must be set in .env (SECRET_KEY=<min 32 chars>)
     algorithm: str = "HS256"
     access_token_expire_minutes: int = 30
     refresh_token_expire_days: int = 7
@@ -25,7 +28,7 @@ class Settings(BaseSettings):
     def cors_origin_list(self) -> list[str]:
         return json.loads(self.cors_origins)
 
-    model_config = {"env_file": ".env", "extra": "ignore"}
+    model_config = {"env_file": str(_ENV_FILE), "extra": "ignore"}
 
 
 settings = Settings()

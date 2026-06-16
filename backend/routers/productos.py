@@ -1,9 +1,12 @@
 from typing import Annotated, Optional
 from fastapi import APIRouter, Depends, Query
-from pydantic import BaseModel
 from sqlmodel import select
 from backend.database import get_uow
-from backend.schemas.producto import ProductoCreate, ProductoRead, ProductoUpdate, ProductoIngredienteRead, AddIngredienteRequest
+from backend.schemas.producto import (
+    ProductoCreate, ProductoRead, ProductoUpdate,
+    ProductoIngredienteRead, AddIngredienteRequest,
+    ProductoDisponibilidadUpdate, ProductoStockUpdate, ProductoImagenesUpdate,
+)
 from backend.schemas.pagination import PaginatedResponse
 from backend.services import producto_service
 from backend.uow.unit_of_work import UnitOfWork
@@ -78,13 +81,10 @@ def remove_ingrediente(
     with uow:
         return producto_service.remove_ingrediente(uow, producto_id, ingrediente_id)
 
-class ProductoDisponibilidad(BaseModel):
-    disponible: bool
-
 @router.patch("/{producto_id}/disponibilidad", response_model=ProductoRead)
 def update_disponibilidad(
     producto_id: int,
-    data: ProductoDisponibilidad,
+    data: ProductoDisponibilidadUpdate,
     current_user: Usuario = Depends(check_role(["ADMIN", "STOCK"])),
     uow: UnitOfWork = Depends(get_uow)
 ):
@@ -92,43 +92,26 @@ def update_disponibilidad(
         return producto_service.update_disponibilidad(uow, producto_id, data.disponible)
 
 
-class StockUpdate(BaseModel):
-    stock_cantidad: int
-
-
 @router.patch("/{producto_id}/stock", response_model=ProductoRead)
 def update_stock(
     producto_id: int,
-    data: StockUpdate,
+    data: ProductoStockUpdate,
     current_user: Usuario = Depends(check_role(["ADMIN", "STOCK"])),
     uow: UnitOfWork = Depends(get_uow)
 ):
     with uow:
-        producto = producto_service.get_by_id(uow, producto_id)
-        producto.stock_cantidad = data.stock_cantidad
-        uow.productos.add(producto)
-        uow.session.flush()
-        uow.session.refresh(producto)
-        return producto
+        return producto_service.update_stock(uow, producto_id, data.stock_cantidad)
 
-
-class ImagenesUpdate(BaseModel):
-    imagenes_url: list[str]
 
 @router.patch("/{producto_id}/imagenes", response_model=ProductoRead)
 def update_imagenes(
     producto_id: int,
-    data: ImagenesUpdate,
+    data: ProductoImagenesUpdate,
     current_user: Usuario = Depends(check_role(["ADMIN"])),
     uow: UnitOfWork = Depends(get_uow)
 ):
     with uow:
-        producto = producto_service.get_by_id(uow, producto_id)
-        producto.imagenes_url = data.imagenes_url
-        uow.productos.add(producto)
-        uow.session.flush()
-        uow.session.refresh(producto)
-        return producto
+        return producto_service.update_imagenes(uow, producto_id, data.imagenes_url)
 
 
 @router.get("/{producto_id}/ingredientes", response_model=list[ProductoIngredienteRead])

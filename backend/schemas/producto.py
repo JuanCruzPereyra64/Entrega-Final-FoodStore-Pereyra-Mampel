@@ -65,3 +65,15 @@ class ProductoRead(SQLModel):
     unidad_venta_id: Optional[int] = None
     categorias: list[CategoriaRead] = []
     ingredientes: list[IngredienteRead] = []
+
+
+class ProductoDisponibilidadUpdate(SQLModel):
+    disponible: bool
+
+
+class ProductoStockUpdate(SQLModel):
+    stock_cantidad: int
+
+
+class ProductoImagenesUpdate(SQLModel):
+    imagenes_url: list[str]

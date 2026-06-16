@@ -59,7 +59,7 @@ export function LoginPage() {
           <div className="pt-4 flex flex-col items-center gap-3 border-t border-slate-100 dark:border-slate-800">
             <button
               type="button"
-              onClick={() => { setEmail('test@test.com'); setPassword('123456'); }}
+              onClick={() => { setEmail('test@test.com'); setPassword('Test12345!'); }}
               className="text-xs font-semibold text-slate-400 hover:text-primary transition-colors"
             >
               Autocompletar Cliente (Demo)

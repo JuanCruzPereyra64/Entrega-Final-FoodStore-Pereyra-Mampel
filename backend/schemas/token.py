@@ -6,6 +6,7 @@ class Token(SQLModel):
 
 class TokenPayload(SQLModel):
     sub: str | None = None
+    type: str | None = None
 
 class TokenResponse(SQLModel):
     access_token: str

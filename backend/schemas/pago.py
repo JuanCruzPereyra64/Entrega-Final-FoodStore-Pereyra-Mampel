@@ -15,6 +15,20 @@ class PagoCreate(SQLModel):
     description: Optional[str] = None
 
 
+class PreferenciaCreate(BaseModel):
+    pedido_id: int
+    email: str
+    back_url_success: str = "http://localhost:5173/mis-pedidos"
+    back_url_failure: str = "http://localhost:5173/carrito"
+    back_url_pending: str = "http://localhost:5173/mis-pedidos"
+
+
+class PreferenciaResponse(BaseModel):
+    preference_id: str
+    init_point: str
+    sandbox_init_point: str
+
+
 class MPNotification(BaseModel):
     id: Optional[int] = None
     type: Optional[str] = None
