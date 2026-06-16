@@ -113,14 +113,17 @@ export function ProductosPage() {
       precio_base: Number(form.precio_base),
       descripcion: form.descripcion,
       categoria_ids: [form.categoria_id],
-      ingredientes: form.ingredientes.map((i: any) => ({ id: i.id, cantidad_requerida: Number(i.cantidad_requerida) })),
+      ingredientes: form.ingredientes.map((i: any) => ({ id: i.id, cantidad: Number(i.cantidad_requerida) })),
       imagenes_url: form.imagenes_url.filter((u: string) => u.trim() !== '')
     }
 
+    const onSuccess = () => setModalOpen(false)
+    const onError = (err: Error) => alert(err.message)
+
     if (editing) {
-      updateMutation.mutate({ id: editing.id, data: payload }, { onSuccess: () => setModalOpen(false) })
+      updateMutation.mutate({ id: editing.id, data: payload }, { onSuccess, onError })
     } else {
-      createMutation.mutate(payload, { onSuccess: () => setModalOpen(false) })
+      createMutation.mutate(payload, { onSuccess, onError })
     }
   }
 

@@ -99,6 +99,13 @@ export const pedidosApi = {
     request<import('../types').Pedido>(`/api/v1/pedidos/${id}/estado`, { method: 'PATCH', body: JSON.stringify({ nuevo_estado: estado_codigo }) }),
 }
 
+export const unidadesMedidaApi = {
+  getAll: () => request<import('../types').UnidadMedida[]>('/api/v1/unidades-medida/'),
+  create: (data: import('../types').UnidadMedidaCreate) =>
+    request<import('../types').UnidadMedida>('/api/v1/unidades-medida/', { method: 'POST', body: JSON.stringify(data) }),
+  remove: (id: number) => request<void>(`/api/v1/unidades-medida/${id}`, { method: 'DELETE' }),
+}
+
 export const uploadApi = {
   uploadImage: async (file: File) => {
     const formData = new FormData();

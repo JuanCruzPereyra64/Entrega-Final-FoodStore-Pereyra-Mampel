@@ -20,11 +20,6 @@ frontend/dist/
 *.db
 *.sqlite
 
-# AI / Tooling
-.atl/
-.claude/
-scratch/
-
 # OS
 .DS_Store
 Thumbs.db

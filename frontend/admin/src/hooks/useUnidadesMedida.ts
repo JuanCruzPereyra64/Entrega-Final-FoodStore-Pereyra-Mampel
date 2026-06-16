@@ -1,34 +1,20 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import type { UnidadMedida } from '../types'
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
+import type { UnidadMedida, UnidadMedidaCreate } from '../types'
+import { unidadesMedidaApi } from '../services/api'
 
 export function useUnidadesMedida() {
   return useQuery({
     queryKey: ['unidades-medida'],
-    queryFn: async (): Promise<UnidadMedida[]> => {
-      const res = await fetch(`${API_URL}/api/v1/unidades-medida`)
-      if (!res.ok) throw new Error('Error al cargar unidades de medida')
-      const data = await res.json()
-      return Array.isArray(data?.items) ? data.items : data
-    }
+    queryFn: (): Promise<UnidadMedida[]> => unidadesMedidaApi.getAll(),
   })
 }
 
 export function useCreateUnidadMedida() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: async (data: { nombre: string }) => {
-      const res = await fetch(`${API_URL}/api/v1/unidades-medida/`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data)
-      })
-      if (!res.ok) {
-        const err = await res.json()
-        throw new Error(err.detail || 'Error al crear unidad de medida')
-      }
-      return res.json()
+    mutationFn: async (data: UnidadMedidaCreate) => {
+      const res = await unidadesMedidaApi.create(data)
+      return res
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['unidades-medida'] })
@@ -40,14 +26,7 @@ export function useDeleteUnidadMedida() {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: async (id: number) => {
-      const res = await fetch(`${API_URL}/api/v1/unidades-medida/${id}`, {
-        method: 'DELETE'
-      })
-      if (!res.ok) {
-        const err = await res.json()
-        throw new Error(err.detail || 'Error al eliminar unidad de medida')
-      }
-      return res.json()
+      await unidadesMedidaApi.remove(id)
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['unidades-medida'] })

@@ -32,7 +32,7 @@ def create(uow: UnitOfWork, data: ProductoCreate) -> Producto:
     for ing in data.ingredientes:
         ingrediente_service.get_by_id(uow, ing.id)
         
-    producto = Producto.model_validate(data, update={"categorias": [], "ingredientes": []})
+    producto = Producto(**data.model_dump(exclude={"categoria_ids", "ingredientes"}))
     uow.productos.add(producto)
     uow.session.flush()
     uow.session.refresh(producto)
@@ -44,7 +44,13 @@ def create(uow: UnitOfWork, data: ProductoCreate) -> Producto:
 
     # Unir ingredientes
     for ing in data.ingredientes:
-        link_ing = ProductoIngrediente(producto_id=producto.id, ingrediente_id=ing.id, cantidad=ing.cantidad)
+        ing_model = ingrediente_service.get_by_id(uow, ing.id)
+        link_ing = ProductoIngrediente(
+            producto_id=producto.id,
+            ingrediente_id=ing.id,
+            cantidad=ing.cantidad,
+            unidad_medida_id=ing_model.unidad_medida_id,
+        )
         uow.session.add(link_ing)
     
     uow.session.flush()
@@ -70,8 +76,13 @@ def update(uow: UnitOfWork, producto_id: int, data: ProductoUpdate) -> Producto:
             uow.session.delete(link)
         
         for ing in data.ingredientes:
-            ingrediente_service.get_by_id(uow, ing.id)
-            link = ProductoIngrediente(producto_id=producto_id, ingrediente_id=ing.id, cantidad=ing.cantidad)
+            ing_model = ingrediente_service.get_by_id(uow, ing.id)
+            link = ProductoIngrediente(
+                producto_id=producto_id,
+                ingrediente_id=ing.id,
+                cantidad=ing.cantidad,
+                unidad_medida_id=ing_model.unidad_medida_id,
+            )
             uow.session.add(link)
 
     for key, value in data.model_dump(exclude_unset=True, exclude={"ingredientes", "categoria_ids"}).items():

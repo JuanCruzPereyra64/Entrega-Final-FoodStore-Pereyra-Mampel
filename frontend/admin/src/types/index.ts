@@ -46,6 +46,11 @@ export interface UsuarioLogin {
 export interface UnidadMedida {
   id: number
   nombre: string
+  simbolo?: string
+}
+
+export interface UnidadMedidaCreate {
+  nombre: string
 }
 
 export interface Ingrediente {
@@ -85,7 +90,8 @@ export interface IngredienteCreate {
 
 export interface ProductoIngredienteCreate {
   id: number
-  cantidad_requerida: number
+  cantidad: number
+  unidad_medida_id?: number | null
 }
 
 export interface ProductoCreate {
