@@ -8,6 +8,7 @@ from backend.services import pedido_service
 from backend.uow.unit_of_work import UnitOfWork
 from backend.models.usuario import Usuario
 from backend.api.deps import check_role
+from backend.core.ws_manager import ws_manager
 
 router = APIRouter(prefix="/api/v1/pedidos", tags=["Pedidos"])
 
@@ -46,6 +47,16 @@ def crear_pedido(
             for d in pedido.detalles:
                 _ = d.producto
         _ = pedido.historial
+
+    evento_nuevo = ws_manager._build_evento(
+        event_type="nuevo_pedido",
+        pedido_id=pedido.id,
+        estado_nuevo="PENDIENTE",
+        usuario_id=current_user.id,
+        motivo="Nuevo pedido creado",
+    )
+    ws_manager.broadcast_pedido(pedido.id, evento_nuevo)
+
     return pedido
 
 

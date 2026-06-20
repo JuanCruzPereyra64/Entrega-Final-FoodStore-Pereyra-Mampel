@@ -3,7 +3,7 @@ from decimal import Decimal
 from datetime import datetime, timezone
 from fastapi import HTTPException
 from backend.models.pago import Pago
-from backend.models.pedido import Pedido
+from backend.models.historial_estado_pedido import HistorialEstadoPedido
 from backend.uow.unit_of_work import UnitOfWork
 from backend.schemas.pago import PagoCreate
 from backend.core.config import mp_sdk, settings
@@ -66,12 +66,11 @@ def crear_pago(uow: UnitOfWork, usuario_id: int, data: PagoCreate) -> Pago:
     )
 
     uow.pagos.add(pago)
-    uow.session.flush()
-    uow.session.refresh(pago)
+    uow.flush()
+    uow.pagos.refresh(pago)
 
     if mp_response.get("status") == "approved":
         pedido.estado_codigo = "CONFIRMADO"
-        from backend.models.historial_estado_pedido import HistorialEstadoPedido
         historial = HistorialEstadoPedido(
             pedido_id=pedido.id,
             estado_desde="PENDIENTE",
@@ -79,8 +78,8 @@ def crear_pago(uow: UnitOfWork, usuario_id: int, data: PagoCreate) -> Pago:
             usuario_id=None,
             motivo="Pago aprobado inmediatamente"
         )
-        uow.session.add(historial)
-        uow.session.flush()
+        uow.pedidos.add_historial(historial)
+        uow.flush()
 
     return pago
 
@@ -163,7 +162,6 @@ def procesar_webhook(uow: UnitOfWork, mp_payment_id: int) -> Pago:
         pedido = uow.pedidos.get_by_id(pago.pedido_id)
         if pedido and pedido.estado_codigo == "PENDIENTE":
             pedido.estado_codigo = "CONFIRMADO"
-            from backend.models.historial_estado_pedido import HistorialEstadoPedido
             historial = HistorialEstadoPedido(
                 pedido_id=pedido.id,
                 estado_desde="PENDIENTE",
@@ -171,10 +169,9 @@ def procesar_webhook(uow: UnitOfWork, mp_payment_id: int) -> Pago:
                 usuario_id=None,
                 motivo="Pago confirmado vía webhook MP"
             )
-            uow.session.add(historial)
+            uow.pedidos.add_historial(historial)
 
-    uow.session.flush()
-
+    uow.flush()
     return pago
 
 

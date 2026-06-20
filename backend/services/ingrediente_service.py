@@ -19,7 +19,7 @@ def get_by_id(uow: UnitOfWork, ingrediente_id: int) -> Ingrediente:
 def create(uow: UnitOfWork, data: IngredienteCreate, usuario_id: int = None) -> Ingrediente:
     ingrediente = Ingrediente.model_validate(data)
     uow.ingredientes.add(ingrediente)
-    uow.session.flush()
+    uow.flush()
     
     if ingrediente.stock_cantidad > 0:
         movimiento_stock_service.registrar_movimiento(
@@ -30,7 +30,7 @@ def create(uow: UnitOfWork, data: IngredienteCreate, usuario_id: int = None) -> 
             usuario_id=usuario_id
         )
         
-    uow.session.refresh(ingrediente)
+    uow.ingredientes.refresh(ingrediente)
     return ingrediente
 
 
@@ -51,12 +51,12 @@ def update(uow: UnitOfWork, ingrediente_id: int, data: IngredienteUpdate, usuari
     for key, value in data.model_dump(exclude_unset=True).items():
         setattr(ingrediente, key, value)
     uow.ingredientes.add(ingrediente)
-    uow.session.flush()
-    uow.session.refresh(ingrediente)
+    uow.flush()
+    uow.ingredientes.refresh(ingrediente)
     return ingrediente
 
 
 def delete(uow: UnitOfWork, ingrediente_id: int) -> None:
     ingrediente = get_by_id(uow, ingrediente_id)
     uow.ingredientes.delete(ingrediente)
-    uow.session.flush()
+    uow.flush()

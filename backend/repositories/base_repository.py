@@ -20,3 +20,6 @@ class BaseRepository(Generic[T]):
 
     def delete(self, entity: T) -> None:
         self.session.delete(entity)
+
+    def refresh(self, entity):
+        self.session.refresh(entity)

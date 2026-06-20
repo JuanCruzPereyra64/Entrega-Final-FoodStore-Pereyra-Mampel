@@ -1,6 +1,5 @@
 from typing import Annotated, Optional
 from fastapi import APIRouter, Depends, Query
-from sqlmodel import select
 from backend.database import get_uow
 from backend.schemas.producto import (
     ProductoCreate, ProductoRead, ProductoUpdate,
@@ -11,7 +10,6 @@ from backend.schemas.pagination import PaginatedResponse
 from backend.services import producto_service
 from backend.uow.unit_of_work import UnitOfWork
 from backend.models.usuario import Usuario
-from backend.models.producto import ProductoIngrediente
 from backend.api.deps import check_role
 
 router = APIRouter(prefix="/api/v1/productos", tags=["Productos"])
@@ -120,5 +118,4 @@ def get_producto_ingredientes(
     uow: UnitOfWork = Depends(get_uow)
 ):
     with uow:
-        links = uow.session.exec(select(ProductoIngrediente).where(ProductoIngrediente.producto_id == producto_id)).all()
-        return links
+        return uow.productos.get_ingrediente_links(producto_id)

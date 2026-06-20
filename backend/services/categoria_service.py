@@ -18,8 +18,8 @@ def get_by_id(uow: UnitOfWork, categoria_id: int) -> Categoria:
 def create(uow: UnitOfWork, data: CategoriaCreate) -> Categoria:
     categoria = Categoria.model_validate(data)
     uow.categorias.add(categoria)
-    uow.session.flush()
-    uow.session.refresh(categoria)
+    uow.flush()
+    uow.categorias.refresh(categoria)
     return categoria
 
 
@@ -28,8 +28,8 @@ def update(uow: UnitOfWork, categoria_id: int, data: CategoriaUpdate) -> Categor
     for key, value in data.model_dump(exclude_unset=True).items():
         setattr(categoria, key, value)
     uow.categorias.add(categoria)
-    uow.session.flush()
-    uow.session.refresh(categoria)
+    uow.flush()
+    uow.categorias.refresh(categoria)
     return categoria
 
 
@@ -38,4 +38,4 @@ def delete(uow: UnitOfWork, categoria_id: int) -> None:
     if any(p.deleted_at is None for p in categoria.productos):
         raise HTTPException(status_code=409, detail="No se puede eliminar la categoria porque tiene productos activos")
     uow.categorias.delete(categoria)
-    uow.session.flush()
+    uow.flush()

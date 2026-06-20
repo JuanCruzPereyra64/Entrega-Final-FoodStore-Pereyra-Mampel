@@ -11,6 +11,8 @@ from backend.repositories.direccion_repository import DireccionRepository
 from backend.repositories.unidad_medida_repository import UnidadMedidaRepository
 from backend.repositories.movimiento_stock_repository import MovimientoStockRepository
 from backend.repositories.pago_repository import PagoRepository
+from backend.repositories.refresh_token_repository import RefreshTokenRepository
+from backend.repositories.estadisticas_repository import EstadisticasRepository
 
 
 class UnitOfWork:
@@ -28,6 +30,8 @@ class UnitOfWork:
         self.unidades_medida: UnidadMedidaRepository = None
         self.movimientos_stock: MovimientoStockRepository = None
         self.pagos: PagoRepository = None
+        self.refresh_tokens: RefreshTokenRepository = None
+        self.estadisticas: EstadisticasRepository = None
 
     def __enter__(self):
         self.session = Session(self._engine, expire_on_commit=False)
@@ -42,7 +46,12 @@ class UnitOfWork:
         self.unidades_medida = UnidadMedidaRepository(self.session)
         self.movimientos_stock = MovimientoStockRepository(self.session)
         self.pagos = PagoRepository(self.session)
+        self.refresh_tokens = RefreshTokenRepository(self.session)
+        self.estadisticas = EstadisticasRepository(self.session)
         return self
+
+    def flush(self):
+        self.session.flush()
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         if exc_type is None:

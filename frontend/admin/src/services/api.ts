@@ -110,7 +110,7 @@ export const uploadApi = {
   uploadImage: async (file: File) => {
     const formData = new FormData();
     formData.append('file', file);
-    const res = await apiClient.post<{url: string}>('/api/v1/uploads/imagen', formData, {
+    const res = await apiClient.post<{secure_url: string}>('/api/v1/uploads/imagen', formData, {
       headers: { 'Content-Type': 'multipart/form-data' }
     });
     return res.data;

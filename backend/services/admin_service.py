@@ -1,17 +1,10 @@
 from datetime import datetime, timezone
 from fastapi import HTTPException
-from sqlmodel import select, Session
-from backend.models.usuario import Usuario
-from backend.models.usuario_rol import UsuarioRol
-from backend.models.rol import Rol
 from backend.uow.unit_of_work import UnitOfWork
 
 
-def get_usuarios(uow: UnitOfWork, rol: str = None, offset: int = 0, limit: int = 100) -> list[Usuario]:
-    query = select(Usuario).where(Usuario.deleted_at == None)
-    if rol:
-        query = query.join(UsuarioRol).join(Rol).where(Rol.nombre == rol)
-    return uow.session.exec(query.offset(offset).limit(limit)).all()
+def get_usuarios(uow: UnitOfWork, rol: str = None, offset: int = 0, limit: int = 100) -> list:
+    return uow.usuarios.get_all_with_filters(rol, offset, limit)
 
 
 def delete_usuario(uow: UnitOfWork, usuario_id: int) -> None:
@@ -20,23 +13,23 @@ def delete_usuario(uow: UnitOfWork, usuario_id: int) -> None:
         raise HTTPException(status_code=404, detail="Usuario no encontrado")
     usuario.deleted_at = datetime.now(timezone.utc)
     uow.usuarios.add(usuario)
-    uow.session.flush()
+    uow.flush()
 
 
-def assign_roles(uow: UnitOfWork, usuario_id: int, roles: list[str]) -> Usuario:
+def assign_roles(uow: UnitOfWork, usuario_id: int, roles: list[str]) -> None:
     usuario = uow.usuarios.get_by_id(usuario_id)
     if not usuario:
         raise HTTPException(status_code=404, detail="Usuario no encontrado")
 
-    links = uow.session.exec(select(UsuarioRol).where(UsuarioRol.usuario_id == usuario_id)).all()
+    links = uow.usuarios.get_usuario_roles(usuario_id)
     for link in links:
-        uow.session.delete(link)
+        uow.usuarios.delete_usuario_rol(link)
 
     for r_name in roles:
-        rol_obj = uow.session.exec(select(Rol).where(Rol.nombre == r_name)).first()
+        rol_obj = uow.roles.get_by_nombre(r_name)
         if rol_obj:
-            uow.session.add(UsuarioRol(usuario_id=usuario.id, rol_id=rol_obj.id))
+            uow.usuarios.add_usuario_rol(usuario.id, rol_obj.id)
 
-    uow.session.flush()
-    uow.session.refresh(usuario)
+    uow.flush()
+    uow.usuarios.refresh(usuario)
     return usuario

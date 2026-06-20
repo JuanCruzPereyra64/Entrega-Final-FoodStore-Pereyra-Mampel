@@ -5,9 +5,6 @@ from backend.models.detalle_pedido import DetallePedido
 from backend.models.historial_estado_pedido import HistorialEstadoPedido
 from backend.schemas.pedido import PedidoCreate
 from backend.uow.unit_of_work import UnitOfWork
-from sqlmodel import select
-from backend.models.producto import ProductoIngrediente
-from backend.models.ingrediente import Ingrediente
 from backend.services import movimiento_stock_service
 from backend.core.ws_manager import ws_manager
 
@@ -23,7 +20,6 @@ def crear_pedido(uow: UnitOfWork, usuario_id: int, data: PedidoCreate) -> Pedido
     subtotal = Decimal('0.00')
     detalles_models = []
     
-    # 1. Procesar detalles y calcular totales (Snapshot pattern)
     for det_data in data.detalles:
         producto = uow.productos.get_by_id(det_data.producto_id)
         if not producto:
@@ -45,10 +41,9 @@ def crear_pedido(uow: UnitOfWork, usuario_id: int, data: PedidoCreate) -> Pedido
         detalle.producto = producto
         detalles_models.append(detalle)
         
-        # Validar stock disponible (sin descontar aún — se descuenta al confirmar)
-        links_ing = uow.session.exec(select(ProductoIngrediente).where(ProductoIngrediente.producto_id == producto.id)).all()
+        links_ing = uow.productos.get_ingrediente_links(producto.id)
         for link in links_ing:
-            ing = uow.session.get(Ingrediente, link.ingrediente_id)
+            ing = uow.ingredientes.get_by_id(link.ingrediente_id)
             if ing:
                 cantidad_a_consumir = link.cantidad * det_data.cantidad
                 if ing.stock_cantidad < int(cantidad_a_consumir):
@@ -57,11 +52,10 @@ def crear_pedido(uow: UnitOfWork, usuario_id: int, data: PedidoCreate) -> Pedido
                         detail=f"Stock insuficiente de '{ing.nombre}' para preparar '{producto.nombre}'. Requerido: {int(cantidad_a_consumir)}, Disponible: {ing.stock_cantidad}"
                     )
         
-    costo_envio = Decimal('50.00')  # Hardcoded. Podría provenir de config o logística.
+    costo_envio = Decimal('50.00')
     descuento = Decimal('0.00')
     total = subtotal + costo_envio - descuento
     
-    # 2. Crear Pedido
     pedido = Pedido(
         usuario_id=usuario_id,
         direccion_id=data.direccion_id,
@@ -76,9 +70,8 @@ def crear_pedido(uow: UnitOfWork, usuario_id: int, data: PedidoCreate) -> Pedido
     )
     
     uow.pedidos.add(pedido)
-    uow.session.flush()  # Para que pedido tenga ID
+    uow.flush()
     
-    # 3. Crear Primer Historial
     historial = HistorialEstadoPedido(
         pedido_id=pedido.id,
         estado_desde=None,
@@ -86,10 +79,10 @@ def crear_pedido(uow: UnitOfWork, usuario_id: int, data: PedidoCreate) -> Pedido
         usuario_id=usuario_id,
         motivo='Creación inicial del pedido'
     )
-    uow.session.add(historial)
-    uow.session.flush()
+    uow.pedidos.add_historial(historial)
+    uow.flush()
     
-    uow.session.refresh(pedido)
+    uow.pedidos.refresh(pedido)
     return pedido
 
 
@@ -98,7 +91,6 @@ def transicionar_estado(uow: UnitOfWork, pedido_id: int, nuevo_estado_codigo: st
     if not pedido:
         raise HTTPException(status_code=404, detail="Pedido no encontrado")
         
-    # Validar FSM estricto (Tabla 10)
     estado_actual_codigo = pedido.estado_codigo
     if estado_actual_codigo not in FSM_TRANSICIONES:
         raise HTTPException(status_code=500, detail="Estado actual del pedido es inválido")
@@ -127,14 +119,11 @@ def transicionar_estado(uow: UnitOfWork, pedido_id: int, nuevo_estado_codigo: st
     estado_anterior = pedido.estado_codigo
     pedido.estado_codigo = nuevo_estado_codigo
 
-    # Descuento de stock al confirmar
     if nuevo_estado_codigo == 'CONFIRMADO':
         for detalle in pedido.detalles:
-            links_ing = uow.session.exec(
-                select(ProductoIngrediente).where(ProductoIngrediente.producto_id == detalle.producto_id)
-            ).all()
+            links_ing = uow.productos.get_ingrediente_links(detalle.producto_id)
             for link in links_ing:
-                ing = uow.session.get(Ingrediente, link.ingrediente_id)
+                ing = uow.ingredientes.get_by_id(link.ingrediente_id)
                 if ing:
                     cantidad_a_consumir = link.cantidad * detalle.cantidad
                     if ing.stock_cantidad < int(cantidad_a_consumir):
@@ -143,7 +132,7 @@ def transicionar_estado(uow: UnitOfWork, pedido_id: int, nuevo_estado_codigo: st
                             detail=f"Stock insuficiente de '{ing.nombre}'. Requerido: {int(cantidad_a_consumir)}, Disponible: {ing.stock_cantidad}"
                         )
                     ing.stock_cantidad -= int(cantidad_a_consumir)
-                    uow.session.add(ing)
+                    uow.ingredientes.add(ing)
                     movimiento_stock_service.registrar_movimiento(
                         uow,
                         ingrediente_id=ing.id,
@@ -152,18 +141,15 @@ def transicionar_estado(uow: UnitOfWork, pedido_id: int, nuevo_estado_codigo: st
                         usuario_id=usuario_id
                     )
 
-    # Devolver stock si se cancela un pedido ya confirmado
     if nuevo_estado_codigo == 'CANCELADO' and estado_anterior == 'CONFIRMADO':
         for detalle in pedido.detalles:
-            links_ing = uow.session.exec(
-                select(ProductoIngrediente).where(ProductoIngrediente.producto_id == detalle.producto_id)
-            ).all()
+            links_ing = uow.productos.get_ingrediente_links(detalle.producto_id)
             for link in links_ing:
-                ing = uow.session.get(Ingrediente, link.ingrediente_id)
+                ing = uow.ingredientes.get_by_id(link.ingrediente_id)
                 if ing:
                     cantidad_a_devolver = link.cantidad * detalle.cantidad
                     ing.stock_cantidad += int(cantidad_a_devolver)
-                    uow.session.add(ing)
+                    uow.ingredientes.add(ing)
                     movimiento_stock_service.registrar_movimiento(
                         uow,
                         ingrediente_id=ing.id,
@@ -172,7 +158,6 @@ def transicionar_estado(uow: UnitOfWork, pedido_id: int, nuevo_estado_codigo: st
                         usuario_id=usuario_id
                     )
 
-    # Historial Append-only
     historial = HistorialEstadoPedido(
         pedido_id=pedido.id,
         estado_desde=estado_anterior,
@@ -181,11 +166,12 @@ def transicionar_estado(uow: UnitOfWork, pedido_id: int, nuevo_estado_codigo: st
         motivo=motivo
     )
     
-    uow.session.add(historial)
-    uow.session.flush()
-    uow.session.refresh(pedido)
+    uow.pedidos.add_historial(historial)
+    uow.flush()
+    uow.pedidos.refresh(pedido)
     
     return pedido
+
 
 def get_by_id(uow: UnitOfWork, pedido_id: int) -> Pedido:
     pedido = uow.pedidos.get_by_id(pedido_id)
@@ -193,11 +179,14 @@ def get_by_id(uow: UnitOfWork, pedido_id: int) -> Pedido:
         raise HTTPException(status_code=404, detail="Pedido no encontrado")
     return pedido
 
+
 def get_all(uow: UnitOfWork):
     return uow.pedidos.get_all()
 
+
 def get_by_usuario(uow: UnitOfWork, usuario_id: int):
     return uow.pedidos.get_by_usuario_id(usuario_id)
+
 
 def broadcast_cambio_estado(
     pedido_id: int,

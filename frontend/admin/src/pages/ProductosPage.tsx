@@ -93,7 +93,7 @@ export function ProductosPage() {
     try {
       const { uploadApi } = await import('../services/api')
       const res = await uploadApi.uploadImage(file)
-      setForm((prev: any) => ({ ...prev, imagenes_url: [res.url] }))
+      setForm((prev: any) => ({ ...prev, imagenes_url: [res.secure_url] }))
     } catch (err) {
       alert("Error subiendo imagen")
     } finally {
